@@ -1041,9 +1041,10 @@
   const panel = $('#panel');
   const panelBody = $('#panel-body');
 
-  function showPanel() { panel.hidden = false; }
+  function showPanel() { panel.hidden = false; document.body.classList.add('panel-open'); } // moves the zoom buttons beside the panel
   function closePanel() {
     panel.hidden = true;
+    document.body.classList.remove('panel-open');
     state.panel = null;
     state.picking = null;
     selectCard(null);

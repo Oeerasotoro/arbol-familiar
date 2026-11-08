@@ -228,6 +228,7 @@ svg { display: block; }
   display: grid; place-items: center; box-shadow: 0 4px 14px rgba(58, 38, 18, 0.08);
 }
 .zoom-controls button:hover { border-color: var(--line); }
+body.panel-open .zoom-controls { right: calc(var(--panel-w) + 30px); } /* keep the zoom buttons visible next to an open panel */
 .zoom-controls svg { width: 20px; height: 20px; fill: none; stroke: var(--ink-2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .legend {
   position: absolute; left: 16px; bottom: 16px; z-index: 5;
@@ -357,7 +358,7 @@ svg { display: block; }
   .chips { top: 10px; left: 10px; right: 10px; }
   .chip { font-size: 13px; }
   .legend { left: 10px; bottom: 10px; }
-  .zoom-controls { right: 10px; bottom: 10px; }
+  .zoom-controls, body.panel-open .zoom-controls { right: 10px; bottom: 10px; }
   .zoom-controls button { width: 40px; height: 40px; }
   .panel {                                                      /* panel becomes a bottom sheet */
     top: auto; left: 0; right: 0; bottom: 0; width: auto;
