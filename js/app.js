@@ -53,7 +53,23 @@
   const $ = function (sel) { return document.querySelector(sel); }; // Shortcut to find an element on the page
   function tr(key, vars) { return I18N.t(state.lang, key, vars); }  // Text in the current language
   function person(id) { return fam.byId.get(id); }                   // Person record by number
-  function nameOf(id) { const p = person(id); return p && p.name ? p.name : tr('nameUnknown'); } // Name, or "Name unknown"
+  function nameOf(id) {                                    // Name; for someone without a name, "Madre de Andrea y Viviana"
+    const p = person(id);
+    if (!p) return '';
+    if (p.name) return p.name;
+    const kids = fam.children.get(id).filter(function (c) { return person(c).name; }).map(function (c) { return givenName(person(c).name); });
+    if (!kids.length) return tr('nameUnknown');            // no named children either: "Name unknown"
+    const list = kids.length === 1 ? kids[0]
+      : kids.length === 2 ? kids[0] + tr('and') + kids[1]
+      : kids[0] + ', ' + kids[1] + tr('andOthers');
+    return tr(p.gender === 'male' ? 'fatherOf' : p.gender === 'female' ? 'motherOf' : 'parentOf', { names: list });
+  }
+  function givenName(full) {                               // "María del Carmen Riascos" -> "María del Carmen"
+    const w = full.split(/\s+/);
+    let out = w[0], i = 1;
+    while (i + 1 < w.length && /^(de|del|la|las|los)$/.test(w[i])) { out += ' ' + w[i] + ' ' + w[i + 1]; i += 2; }
+    return out;
+  }
   function genderOf(id) { const p = person(id); return p ? p.gender : 'unknown'; }
   function localized(v) {                                  // Text that may be a plain string or {es, en}
     if (!v) return '';
@@ -130,25 +146,96 @@
     });
     return { groups: groups, groupOf: groupOf };
   }
-  function orderHousehold(ids) {                           // Left-to-right order inside a household
-    if (ids.length <= 2) return ids.slice().sort(function (a, b) { return a - b; });
-    const left = new Set(ids);                             // Walk the chain of partners from one end
-    const deg = function (id) { return Array.from(sideBySide(id)).filter(function (q) { return left.has(q); }).length; };
-    let cur = ids.slice().sort(function (a, b) { return deg(a) - deg(b) || a - b; })[0];
-    const order = [];
-    while (cur != null) {
-      order.push(cur);
-      left.delete(cur);
-      const nextId = Array.from(sideBySide(cur)).find(function (q) { return left.has(q); });
-      cur = nextId != null ? nextId : (left.size ? left.values().next().value : null);
-    }
-    return order;
+  function sharedKids(a, b) {                              // How many children two people have together
+    return fam.children.get(a).filter(function (c) { return fam.children.get(b).indexOf(c) !== -1; }).length;
   }
+
+  // Left-to-right order inside a household. Someone with several partners
+  // (for example a father with children by different mothers) sits in the
+  // middle: the longest chain of partners forms the row, and any extra
+  // partners are added on the outer side nearest to the person they share
+  // children with, those with more children first.
+  function orderHousehold(ids) {
+    if (ids.length <= 2) return ids.slice().sort(function (a, b) { return a - b; });
+    const inGroup = new Set(ids);
+    const nb = function (id) { return Array.from(sideBySide(id)).filter(function (q) { return inGroup.has(q); }); };
+    let best = [], bestScore = -1;
+    if (ids.length <= 12) {                                // Try every chain (households are small)
+      ids.forEach(function (start) {
+        (function grow(path) {
+          let score = path.length * 1000;                  // longer chains win; ties go to chains with more shared children
+          for (let i = 1; i < path.length; i++) score += sharedKids(path[i - 1], path[i]);
+          if (score > bestScore) { bestScore = score; best = path.slice(); }
+          nb(path[path.length - 1]).forEach(function (q) {
+            if (path.indexOf(q) === -1) { path.push(q); grow(path); path.pop(); }
+          });
+        })([start]);
+      });
+    } else {
+      best = [ids[0]];
+    }
+    const order = best.slice();
+    const spineMid = (best.length - 1) / 2;                // centre of the original chain
+    const sideOf = new Map();                              // each member's side of the row: -1 left, +1 right
+    best.forEach(function (id, i) { sideOf.set(id, i < spineMid ? -1 : i > spineMid ? 1 : 0); });
+    let rest = ids.filter(function (id) { return order.indexOf(id) === -1; });
+    let placed = true;
+    while (rest.length && placed) {                        // Add the remaining partners at the ends of the row
+      placed = false;
+      rest.sort(function (a, b) {                          // those with more children together go closer
+        const sa = Math.max.apply(null, [0].concat(nb(a).map(function (q) { return sharedKids(a, q); })));
+        const sb = Math.max.apply(null, [0].concat(nb(b).map(function (q) { return sharedKids(b, q); })));
+        return sb - sa || a - b;
+      });
+      for (let k = 0; k < rest.length; k++) {
+        const id = rest[k];
+        const anchor = nb(id).find(function (q) { return order.indexOf(q) !== -1; });
+        if (anchor == null) continue;
+        let side = sideOf.get(anchor);                     // go on the same side as the person they share children with
+        if (side === 0) side = order.indexOf(anchor) < (order.length - 1) / 2 ? -1 : 1; // middle person: the shorter side
+        if (side < 0) order.unshift(id); else order.push(id);
+        sideOf.set(id, side);
+        rest.splice(k, 1); k--; placed = true;
+      }
+    }
+    return order.concat(rest);
+  }
+
+  // Couples who are not next to each other in the row (a person's second or
+  // third partner) are joined by a line just under the cards. Each such
+  // line gets its own "level" so lines that overlap sideways don't merge.
+  function underLevels(hh) {
+    const levels = new Map();                              // union key -> level (1 = closest to the cards)
+    let maxLevel = 0;
+    hh.groups.forEach(function (grp) {
+      const spans = [];
+      fam.unions.forEach(function (u) {
+        if (u.parents.length !== 2 || hh.groupOf.get(u.parents[0]) !== hh.groups.indexOf(grp)) return;
+        const i1 = grp.members.indexOf(u.parents[0]), i2 = grp.members.indexOf(u.parents[1]);
+        if (i1 < 0 || i2 < 0 || Math.abs(i1 - i2) === 1) return; // next to each other: drawn side to side
+        spans.push({ key: u.key, lo: Math.min(i1, i2), hi: Math.max(i1, i2) });
+      });
+      spans.sort(function (a, b) { return (a.hi - a.lo) - (b.hi - b.lo) || a.lo - b.lo; });
+      const used = [];                                     // spans already placed on each level
+      spans.forEach(function (s) {
+        let L = 1;
+        while ((used[L] || []).some(function (o) { return s.lo <= o.hi && o.lo <= s.hi; })) L++;
+        (used[L] = used[L] || []).push(s);
+        levels.set(s.key, L);
+        maxLevel = Math.max(maxLevel, L);
+      });
+    });
+    return { levels: levels, maxLevel: maxLevel };
+  }
+  const UNDER_FIRST = 12;                                  // Pixels from the card bottom to the first under-line
+  const UNDER_STEP = 9;                                    // Pixels between under-line levels
 
   function computeLayout() {
     const hh = buildHouseholds();
+    const under = underLevels(hh);
+    const rowGap = 74 + Math.max(0, under.maxLevel - 3) * UNDER_STEP; // more room between rows if many under-lines
     const g = new dagre.graphlib.Graph();                  // An empty layout graph
-    g.setGraph({ rankdir: 'TB', nodesep: 30, ranksep: 74, marginx: 60, marginy: 60 }); // Top to bottom; gaps in pixels
+    g.setGraph({ rankdir: 'TB', nodesep: 30, ranksep: rowGap, marginx: 60, marginy: 60 }); // Top to bottom; gaps in pixels
     g.setDefaultEdgeLabel(function () { return {}; });
     hh.groups.forEach(function (grp) {                     // One box per household, wide enough for every member
       const n = grp.members.length;
@@ -179,10 +266,14 @@
 
     fam.unions.forEach(function (u) {                      // Where each family's lines meet
       const ps = u.parents.map(function (id) { return layout.people.get(id); });
-      if (ps.length === 2) {                               // Couple: midpoint of the line between them
-        layout.unions.set(u.key, { x: (ps[0].x + ps[1].x) / 2, y: Math.max(ps[0].y, ps[1].y), couple: true });
+      const bottom = Math.max.apply(null, ps.map(function (p) { return p.y; })) + CARD_H / 2; // lowest card edge
+      if (ps.length === 2 && under.levels.has(u.key)) {    // Couple not side by side: meet on a line under the cards
+        const y = bottom + UNDER_FIRST + (under.levels.get(u.key) - 1) * UNDER_STEP;
+        layout.unions.set(u.key, { x: (ps[0].x + ps[1].x) / 2, y: y, couple: true, under: true, parentBottom: bottom });
+      } else if (ps.length === 2) {                        // Couple side by side: midpoint of the line between them
+        layout.unions.set(u.key, { x: (ps[0].x + ps[1].x) / 2, y: Math.max(ps[0].y, ps[1].y), couple: true, parentBottom: bottom });
       } else {                                             // Single known parent: bottom of their card
-        layout.unions.set(u.key, { x: ps[0].x, y: ps[0].y + CARD_H / 2, couple: false });
+        layout.unions.set(u.key, { x: ps[0].x, y: bottom, couple: false, parentBottom: bottom });
       }
     });
   }
@@ -213,11 +304,23 @@
       const xs = fam.parentLinks.get(id).map(function (l) { return xOf(l.id); });
       return xs.length ? xs.reduce(function (s, x) { return s + x; }, 0) / xs.length : null;
     }
-    function wantFromParents(grp) {                        // Where this household would like to be, judging by the row above
-      if (grp.members.length === 2) {                      // Put each partner on the side of their own parents
-        const a = parentsX(grp.members[0]), b = parentsX(grp.members[1]);
-        if (a != null && b != null ? a > b : a != null ? a > grp.x : b != null ? b < grp.x : false) grp.members.reverse();
+    function orient(grp) {                                 // Flip a household so each member sits on the side of their own parents
+      if (grp.members.length < 2) return;
+      const pts = [];
+      grp.members.forEach(function (id, i) { const px = parentsX(id); if (px != null) pts.push({ i: i, px: px }); });
+      if (!pts.length) return;
+      let score = 0;
+      if (pts.length === 1) {
+        score = (pts[0].i - (grp.members.length - 1) / 2) * (pts[0].px - grp.x);
+      } else {
+        const mi = pts.reduce(function (s, p) { return s + p.i; }, 0) / pts.length;
+        const mp = pts.reduce(function (s, p) { return s + p.px; }, 0) / pts.length;
+        pts.forEach(function (p) { score += (p.i - mi) * (p.px - mp); });
       }
+      if (score < 0) grp.members.reverse();
+    }
+    function wantFromParents(grp) {                        // Where this household would like to be, judging by the row above
+      orient(grp);
       const wants = [];
       grp.members.forEach(function (id, i) {
         const px = parentsX(id);
@@ -314,11 +417,17 @@
   function drawLinks() {
     fam.unions.forEach(function (u) {
       const up = layout.unions.get(u.key);                 // Where this family's lines meet
-      const parentBottom = up.couple ? up.y + CARD_H / 2 : up.y; // Lowest edge of the parents' cards
+      const parentBottom = up.parentBottom;                // Lowest edge of the parents' cards
       const kids = u.children.map(function (id) { return { id: id, pos: layout.people.get(id) }; });
       const childTop = kids.length ? Math.min.apply(null, kids.map(function (k) { return k.pos.y - CARD_H / 2; })) : null;
-      const busY = childTop == null ? null : parentBottom + (childTop - parentBottom) / 2; // Height of the line the children hang from
-      if (up.couple) {                                     // Couple: a line from each partner's card to the meeting point
+      const busY = childTop == null ? null : Math.max(parentBottom + (childTop - parentBottom) / 2, up.y + 14); // Height of the line the children hang from
+      if (up.under) {                                      // Couple not side by side: down from each card, then across under the cards
+        u.parents.forEach(function (pid) {
+          const pp = layout.people.get(pid);
+          const allUnconfirmed = kids.length > 0 && kids.every(function (k) { return !linkConfirmed(k.id, pid); });
+          addLink('ps:' + pid + ':' + u.key, [[pp.x, pp.y + CARD_H / 2], [pp.x, up.y], [up.x, up.y]], allUnconfirmed);
+        });
+      } else if (up.couple) {                              // Couple side by side: a line from each partner's card to the meeting point
         u.parents.forEach(function (pid) {
           const pp = layout.people.get(pid);
           const edgeX = pp.x < up.x ? pp.x + CARD_W / 2 : pp.x - CARD_W / 2; // Side of the card that faces the partner

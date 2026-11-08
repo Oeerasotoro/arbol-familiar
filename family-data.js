@@ -14,7 +14,9 @@
      id          Permanent person number. Never change it, never reuse it.
                  A new person gets the next number after the highest one
                  in this file (the last one used is noted at the bottom).
-     name        Full name as it should appear. Leave "" if unknown.
+     name        Full name as it should appear. Leave "" if unknown: the
+                 site then shows "Madre de …" / "Padre de …" using the
+                 person's children, or "Nombre desconocido".
      gender      "male", "female" or "unknown". Used to choose words such
                  as uncle/aunt (tío/tía).
      father      The father's person number, or null if not known.
@@ -525,12 +527,228 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
+  // ===================== OSCAR'S HALF-SIBLINGS =====================
+  // Same father as Oscar (José Ernesto, #2), different mothers.
+  // Andrea and Viviana share a second surname (Eraso), and Luis Miguel and
+  // María Fernanda share theirs (Melodelgado), so each pair is recorded with
+  // the same mother. Each mother's name is not known yet: fill it in on her
+  // record (#35, #36, #37) when you learn it.
+  {
+    id: 28,
+    name: "Andrea Eraso Eraso",
+    gender: "female",
+    father: 2,
+    mother: 35,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 29,
+    name: "Viviana Eraso Eraso",
+    gender: "female",
+    father: 2,
+    mother: 35,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 30,
+    name: "Luis Miguel Eraso Melodelgado",
+    gender: "male",
+    father: 2,
+    mother: 36,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 31,
+    name: "María Fernanda Eraso Melodelgado",
+    gender: "female",
+    father: 2,
+    mother: 36,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 32,
+    name: "Evelyn Eraso",
+    gender: "female",
+    father: 2,
+    mother: 37,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // Same mother as Oscar (Gloria Faney, #3), different fathers (#38, #39).
+  {
+    id: 33,
+    name: "Daniel Alfonso Guevara Toro",
+    gender: "male",
+    father: 38,
+    mother: 3,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 34,
+    name: "Diego Fernando Toro",
+    gender: "male",
+    father: 39,
+    mother: 3,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ===================== OTHER PARENTS OF THE HALF-SIBLINGS =====================
+  // Names not known yet. The site shows them as "Madre de Andrea y Viviana"
+  // and so on until you fill in "name". They are not recorded as couples
+  // with José Ernesto or Gloria (notPartners), so their relatives are not
+  // counted as in-laws. If one of them is a current partner, delete that
+  // person's notPartners line.
+  {
+    id: 35,
+    name: "",                                  // Mother of Andrea and Viviana (an Eraso) — name not known yet
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    notPartners: [2],                          // Not recorded as a couple; if they are together, delete this line
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Madre de Andrea y Viviana Eraso Eraso; falta su nombre.",
+      en: "Mother of Andrea and Viviana Eraso Eraso; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 36,
+    name: "",                                  // Mother of Luis Miguel and María Fernanda (a Melodelgado) — name not known yet
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    notPartners: [2],                          // Not recorded as a couple; if they are together, delete this line
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Madre de Luis Miguel y María Fernanda Eraso Melodelgado; falta su nombre.",
+      en: "Mother of Luis Miguel and María Fernanda Eraso Melodelgado; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 37,
+    name: "",                                  // Mother of Evelyn Eraso — name not known yet
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    notPartners: [2],                          // Not recorded as a couple; if they are together, delete this line
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Madre de Evelyn Eraso; falta su nombre.",
+      en: "Mother of Evelyn Eraso; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 38,
+    name: "",                                  // Father of Daniel Alfonso (a Guevara) — name not known yet
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    notPartners: [3],                          // Not recorded as a couple; if they are together, delete this line
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Padre de Daniel Alfonso Guevara Toro; falta su nombre.",
+      en: "Father of Daniel Alfonso Guevara Toro; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 39,
+    name: "",                                  // Father of Diego Fernando — name not known yet
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    notPartners: [3],                          // Not recorded as a couple; if they are together, delete this line
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Padre de Diego Fernando Toro; falta su nombre.",
+      en: "Father of Diego Fernando Toro; name not known yet.",
+    },
+    bio: "",
+  },
+
   // ===================== ADD NEW PEOPLE BELOW THIS LINE =====================
   // Copy this template, remove the // at the start of each line,
   // and give it the next free number.
   //
   // {
-  //   id: 28,
+  //   id: 40,
   //   name: "",
   //   gender: "unknown",
   //   father: null,
@@ -547,4 +765,4 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
 
 ];                                             // The list of people ends here — keep this line
 
-// Highest person number used so far: 27   ← update this note when you add someone
+// Highest person number used so far: 39   ← update this note when you add someone
