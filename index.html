@@ -40,6 +40,17 @@
       <ul id="search-results" class="results" role="listbox" hidden></ul>
     </div>
 
+    <div class="view-actions">                               <!-- The game and the 3D view -->
+      <button id="game-open" class="btn btn-ghost" type="button" data-i18n-title="gameOpen" data-i18n-aria="gameOpen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.3c-.7.4-1.2 1-1.2 1.8v.4"></path><path d="M12 17v.2"></path></svg>
+        <span data-i18n="game"></span>
+      </button>
+      <a id="view-3d" class="btn btn-ghost" href="3d.html" data-i18n-title="view3dTitle" data-i18n-aria="view3dTitle"> <!-- Opens 3d.html; app.js adds the focus person -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"></path><path d="M4 7.5l8 4.5 8-4.5M12 12v9"></path></svg>
+        <span data-i18n="view3d"></span>
+      </a>
+    </div>
+
     <div class="top-actions">
       <button id="compare-open" class="btn btn-ghost" type="button">  <!-- Opens the "compare two people" panel -->
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="3"></circle><circle cx="17" cy="17" r="3"></circle><path d="M9.5 9.5l5 5"></path></svg>
@@ -59,8 +70,10 @@
         <clipPath id="avatar-clip" clipPathUnits="objectBoundingBox"><circle cx="0.5" cy="0.5" r="0.5"></circle></clipPath> <!-- Makes photos round -->
       </defs>
       <g id="viewport">                                       <!-- Moved and scaled when you drag or zoom -->
+        <g id="ghosts"></g>                                   <!-- The previous drawing, fading out during an animation -->
         <g id="link-hits"></g>                                <!-- Wide invisible lines that react to the mouse and glow -->
         <g id="links"></g>                                    <!-- Lines between relatives -->
+        <g id="flow"></g>                                     <!-- Little lights moving along the path between compared people -->
         <g id="dots"></g>                                     <!-- Dots where a couple's lines meet -->
         <g id="cards"></g>                                    <!-- One card per person -->
       </g>
@@ -81,7 +94,14 @@
 
     <details class="legend" id="legend">                      <!-- Explains the line styles -->
       <summary data-i18n="legend"></summary>
-      <ul>
+      <div class="legend-body">
+      <div class="legend-lines" id="legend-lines">           <!-- Colours by family branch; filled by app.js -->
+        <label class="lg-switch"><input type="checkbox" id="line-toggle"><span data-i18n="lineColors"></span></label>
+        <ul id="line-legend"></ul>
+      </div>
+      <details class="legend-more">                          <!-- Line styles, folded so the legend stays small -->
+      <summary data-i18n="legendMore"></summary>
+      <ul class="legend-styles">
         <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path></svg><span data-i18n="legendConfirmed"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-dashed" d="M2 5h36"></path></svg><span data-i18n="legendUnconfirmed"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-lineage" d="M2 5h36"></path></svg><span data-i18n="legendLine"></span></li>
@@ -91,6 +111,8 @@
         <li><span class="lg-pill">+</span><span data-i18n="legendBranch"></span></li> <!-- "Ver familia" pill on relatives by marriage -->
       </ul>
       <p class="legend-hint" data-i18n="legendHover"></p>      <!-- "Hover over a line to see who it connects" -->
+      </details>
+      </div>
     </details>
 
     <div id="problems" class="problems" hidden></div>          <!-- Only appears if family-data.js has a mistake -->
@@ -111,6 +133,7 @@
   <script src="family-data.js"></script>       <!-- YOUR DATA: people, photos, stories -->
   <script src="js/kinship.js"></script>        <!-- Works out relationships -->
   <script src="js/i18n.js"></script>           <!-- Words in Spanish and English -->
+  <script src="js/lines.js"></script>          <!-- Colours for each branch of the family -->
   <script src="js/app.js"></script>            <!-- Draws the tree and runs the buttons -->
 
   <!-- Visitor counter (GoatCounter, no cookies). Stats: https://arbol-eraso.goatcounter.com

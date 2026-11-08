@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- =====================================================================
+     3D.HTML — the family as a 3D constellation (an extra view of the tree)
+     Opened from the "Vista 3D" button in the tree. Uses the same data
+     file (family-data.js); js/constellation.js draws everything.
+     You normally never edit this file.
+     ===================================================================== -->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">                <!-- Ask search engines not to list this family site -->
+  <title>Constelación familiar</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b4532a'/%3E%3Cpath d='M16 7v18M10 13h12M10 13v6M22 13v6' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/constellation.css">
+</head>
+<body>
+  <!-- ===================== TOP BAR ===================== -->
+  <header class="c3-bar">
+    <a id="c3-back" class="c3-back" href="index.html" data-i18n-title="c3BackTitle"> <!-- Back to the tree; the script adds the same person -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg><span data-i18n="c3Back"></span>
+    </a>
+    <div class="c3-titles">
+      <h1 data-i18n="c3Title"></h1>
+      <p id="c3-focus"></p>                                     <!-- "Viendo como Oscar …" -->
+    </div>
+    <div class="c3-search" role="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <input id="c3-search-input" type="search" autocomplete="off" spellcheck="false" data-i18n-placeholder="searchPlaceholder" aria-label="Buscar">
+      <ul id="c3-results" hidden></ul>
+    </div>
+    <div class="c3-tools">
+      <button id="c3-spin" type="button" class="c3-icon">       <!-- Turn slowly on its own / pause -->
+        <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12"></path></svg>
+        <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10-6.5z"></path></svg>
+      </button>
+      <button id="c3-reset" type="button" class="c3-icon" data-i18n-title="c3Reset"> <!-- Back to the starting view -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"></path><path d="M6 10v10h12V10"></path></svg>
+      </button>
+      <div class="lang-toggle" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="es">ES</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== 3D AREA ===================== -->
+  <main id="c3-canvas" class="c3-canvas"></main>                <!-- The 3D drawing goes here -->
+
+  <details id="c3-legend" class="c3-legend">                    <!-- Colours of the family branches -->
+    <summary id="c3-legend-title"></summary>
+    <ul id="c3-legend-list"></ul>
+    <p class="c3-legend-note" data-i18n="c3Generations"></p>
+  </details>
+
+  <p id="c3-hint" class="c3-hint" data-i18n="c3Hint"></p>       <!-- How to move around; fades after the first drag -->
+  <div id="c3-tip" class="c3-tip" hidden></div>                 <!-- Name shown when the mouse is over a star -->
+  <aside id="c3-card" class="c3-card" aria-live="polite" hidden></aside> <!-- Card of the chosen star -->
+  <div id="c3-fallback" class="c3-fallback" hidden>
+    <p data-i18n="c3NoWebGL"></p>
+    <a href="index.html" data-i18n="c3BackTitle"></a>
+  </div>
+
+  <!-- ===================== SCRIPTS (order matters) ===================== -->
+  <script src="lib/three.min.js"></script>          <!-- 3D drawing library (three.js) -->
+  <script src="lib/OrbitControls.js"></script>      <!-- Turning and zooming with mouse or fingers -->
+  <script src="lib/dagre.min.js"></script>          <!-- Arranges people in generations -->
+  <script src="family-data.js"></script>            <!-- YOUR DATA: the same file as the tree -->
+  <script src="js/kinship.js"></script>             <!-- Works out relationships -->
+  <script src="js/i18n.js"></script>                <!-- Words in Spanish and English -->
+  <script src="js/lines.js"></script>               <!-- Colours for each branch of the family -->
+  <script src="js/constellation.js"></script>       <!-- Draws the 3D view -->
+
+  <!-- Visitor counter (GoatCounter, no cookies), the same as on the tree page. -->
+  <script data-goatcounter="https://arbol-eraso.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

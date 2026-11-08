@@ -217,6 +217,7 @@ svg { display: block; }
 .chip .num { color: var(--muted); }
 .chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
 .compare-chip .dot { background: var(--path); }
+.compare-chip > span:nth-child(2) { flex: 1 1 180px; min-width: 0; } /* long names wrap beside the dot, not under it */
 .chip-close { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--surface-2); display: grid; place-items: center; }
 .chip-close svg { width: 14px; height: 14px; stroke: var(--ink-2); stroke-width: 2.4; fill: none; stroke-linecap: round; }
 
@@ -352,9 +353,12 @@ body.panel-open .zoom-controls { right: calc(var(--panel-w) + 30px); } /* keep t
   .brand-mark { width: 32px; height: 32px; }
   .brand h1 { font-size: 19px; }
   .subtitle { display: none; }
-  .search { order: 3; flex: 1 1 100%; max-width: none; }
-  #compare-open span { display: none; }                         /* icon only on phones */
-  #compare-open { width: 40px; padding: 0; }
+  .brand { flex: 1 1 calc(100% - 190px); }                     /* first row: title, compare, language */
+  .top-actions { order: 2; }
+  .search { order: 3; flex: 1 1 160px; max-width: none; }      /* second row: search, game, 3D */
+  .view-actions { order: 4; }
+  #compare-open span, .view-actions .btn span { display: none; } /* icons only on phones */
+  #compare-open, .view-actions .btn { width: 40px; padding: 0; }
   .chips { top: 10px; left: 10px; right: 10px; }
   .chip { font-size: 13px; }
   .legend { left: 10px; bottom: 10px; }
@@ -391,8 +395,6 @@ body.panel-open .zoom-controls { right: calc(var(--panel-w) + 30px); } /* keep t
 .branch-badge:hover rect { filter: brightness(1.1); }
 .branch-badge:focus { outline: none; }
 .branch-badge:focus-visible rect { stroke: var(--path); stroke-width: 3; }
-.card.revealed { animation: card-in .45s ease-out; }             /* newly shown relatives fade in */
-@keyframes card-in { from { opacity: 0; } }
 .lg-pill { width: 40px; height: 16px; flex: none; border-radius: 8px; background: var(--marriage); color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
 .summary h2 { margin-right: 40px; }
 .summary .intro { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
@@ -411,3 +413,85 @@ body.panel-open .zoom-controls { right: calc(var(--panel-w) + 30px); } /* keep t
 @media (max-width: 760px) {
   .summary-chip .sum-item.extra { display: none; }               /* phones: title, first group and the button */
 }
+
+/* ---------- 13. Header buttons: game and 3D view ---------- */
+.view-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.view-actions .btn { text-decoration: none; color: var(--ink); }
+#game-open svg, #view-3d svg { stroke-linejoin: round; }
+@media (max-width: 1180px) and (min-width: 761px) {           /* medium screens: icons only for the game and 3D */
+  .view-actions .btn span { display: none; }
+  .view-actions .btn { width: 40px; padding: 0; }
+}
+@media (max-width: 940px) and (min-width: 761px) {
+  #compare-open span { display: none; }
+  #compare-open { width: 40px; padding: 0; }
+}
+
+/* ---------- 14. Colours by family branch ---------- */
+.card-stripe { fill: var(--card-color, transparent); display: none; pointer-events: none; }
+#tree.lines-on .card-stripe { display: inline; }
+#tree.lines-on .card:not(.is-focus) .card-bg { fill: var(--card-tint, var(--surface)); }
+.legend-body { display: grid; }
+.legend-lines { padding: 2px 14px 10px; border-bottom: 1px solid var(--border); margin-bottom: 9px; }
+.legend-lines ul { padding: 6px 0 0; gap: 5px; }
+.legend-lines.off ul { opacity: 0.45; }
+.lg-switch { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.lg-switch input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.lg-swatch { width: 12px; height: 12px; border-radius: 4px; flex: none; display: inline-block; }
+.lg-text small { color: var(--muted); font-size: 12px; }
+.legend .legend-lines li { gap: 9px; align-items: baseline; }
+.legend .legend-lines .lg-swatch { transform: translateY(1px); }
+.legend-more > summary { cursor: pointer; padding: 0 14px 10px; font-weight: 600; font-size: 12.5px; color: var(--ink-2); list-style: none; }
+.legend-more > summary::-webkit-details-marker { display: none; }
+.legend-more > summary::before { content: "▸ "; color: var(--muted); }
+.legend-more[open] > summary::before { content: "▾ "; }
+.line-chip { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0; padding: 4px 12px 4px 10px; border-radius: 999px; background: var(--surface-2); font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.line-chip small { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+
+/* ---------- 15. Animation: light moving along the comparison path ---------- */
+#ghosts { pointer-events: none; }
+.path-flow { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 1.5 12.5; opacity: 0.95; pointer-events: none; animation: path-flow 0.9s linear infinite; }
+.path-flow.rev { animation-direction: reverse; }
+@keyframes path-flow { to { stroke-dashoffset: -28; } }
+#tree.lighting .path-flow { opacity: 0.15; }
+@media (prefers-reduced-motion: reduce) {
+  .path-flow { animation: none; display: none; }
+  .panel, .game-opt { animation: none !important; }
+}
+
+/* ---------- 16. Game: ¿Cómo estamos emparentados? ---------- */
+.game h2 { margin: 0 40px 4px 0; font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 1.15; }
+.game .intro { margin: 0 0 14px; font-size: 14px; color: var(--ink-2); }
+.game-modes { display: flex; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface-2); }
+.game-modes button { flex: 1; border: 0; background: transparent; height: 34px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px; }
+.game-modes button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(58, 38, 18, 0.14); }
+.game-score { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 2px 0; font-size: 13px; color: var(--muted); }
+.game-score b { color: var(--ink); font-weight: 700; }
+.game-score b.hot { color: var(--accent-ink); }
+.game-card { margin-top: 12px; padding: 16px; border-radius: 16px; background: var(--accent-soft); }
+.game-pair { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 8px; }
+.game-person { border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; min-width: 0; }
+.game-person .gp-name { font-size: 13.5px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.game-person:hover .gp-name { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.avatar-md { position: relative; width: 58px; height: 58px; border-radius: 50%; flex: none; display: grid; place-items: center; overflow: hidden; color: #fff; font-weight: 700; font-size: 20px; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(58, 38, 18, 0.15); }
+.avatar-md img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.game-link { margin-top: 16px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); color: var(--accent-ink); font-weight: 700; box-shadow: 0 1px 4px rgba(58, 38, 18, 0.12); }
+.game-q { margin: 14px 0 12px; font-size: 17px; line-height: 1.45; text-align: center; color: var(--ink); }
+.game-blank { display: inline-block; min-width: 64px; padding: 0 8px; border-bottom: 2px dashed var(--accent); color: var(--accent-ink); font-weight: 700; }
+.game-blank.filled { border-bottom-style: solid; animation: blank-in .35s ease-out; }
+@keyframes blank-in { from { opacity: 0; transform: translateY(4px); } }
+.game-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.game-opt { min-height: 46px; padding: 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-size: 14.5px; font-weight: 600; line-height: 1.25; color: var(--ink); transition: border-color .15s, background .15s, transform .15s; }
+.game-opt:not(:disabled):hover { border-color: var(--accent); transform: translateY(-1px); }
+.game-opt:disabled { cursor: default; color: var(--muted); }
+.game-opt.right { background: #e3f1e6; border-color: #3f8a55; color: #1f5a31; animation: opt-pop .4s ease-out; }
+.game-opt.wrong { background: #fbe6e3; border-color: #c0544a; color: #8a2b23; animation: opt-shake .35s ease-in-out; }
+@keyframes opt-pop { 40% { transform: scale(1.04); } }
+@keyframes opt-shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.game-feedback { margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(143, 61, 27, 0.18); }
+.game-feedback .verdict { margin: 0 0 6px; font-weight: 700; font-size: 16px; }
+.game-feedback.ok .verdict { color: #1f5a31; }
+.game-feedback.bad .verdict { color: #8a2b23; }
+.game-feedback .chain button { text-decoration-color: var(--accent); }
+.game-degree { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.game-reset { margin: 12px 0 0; text-align: center; }

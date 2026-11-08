@@ -1,0 +1,166 @@
+/* =====================================================================
+   CONSTELLATION.CSS — look of the 3D view (3d.html)
+   A night-sky version of the tree's colours. Change the names in
+   :root to restyle it.
+   ===================================================================== */
+
+:root {
+  --sky: #0c1120;                 /* background (also set in js/constellation.js) */
+  --glass: rgba(18, 24, 42, 0.82);/* panels floating over the stars */
+  --glass-2: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.12);
+  --text: #eef0f6;
+  --text-2: #b9c0d2;
+  --muted: #8790a6;
+  --accent: #e0814f;              /* terracotta, lighter for the dark background */
+  --gold: #ffcf6e;                /* the path to the chosen star */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-ui: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bar-h: 64px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--sky); color: var(--text); font-family: var(--font-ui); overflow: hidden; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 8px; }
+
+/* ---------- Top bar ---------- */
+.c3-bar {
+  position: fixed; inset: 0 0 auto 0; height: var(--bar-h); z-index: 20;
+  display: flex; align-items: center; gap: 16px; padding: 0 16px;
+  background: linear-gradient(rgba(12, 17, 32, 0.92), rgba(12, 17, 32, 0.6));
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.c3-back {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px 0 10px;
+  border-radius: 999px; border: 1px solid var(--line); background: var(--glass-2);
+  color: var(--text); text-decoration: none; font-weight: 600; font-size: 14px; flex: none;
+}
+.c3-back:hover { background: rgba(255, 255, 255, 0.12); }
+.c3-back svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.c3-titles { min-width: 0; flex: 0 1 auto; }
+.c3-titles h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; line-height: 1.1; white-space: nowrap; }
+#c3-focus { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#c3-focus strong { color: var(--text-2); font-weight: 600; }
+.c3-search { position: relative; flex: 1 1 320px; max-width: 420px; margin-left: auto; }
+.c3-search > svg { position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; transform: translateY(-50%); fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+#c3-search-input {
+  width: 100%; height: 40px; padding: 0 14px 0 38px; border-radius: 999px;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, 0.07); color: var(--text); font: inherit; font-size: 15px;
+}
+#c3-search-input::placeholder { color: var(--muted); }
+#c3-search-input:focus { outline: none; border-color: var(--gold); }
+#c3-results {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; margin: 0; padding: 6px; list-style: none;
+  background: #151c31; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  max-height: 60vh; overflow-y: auto;
+}
+#c3-results button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px; border: 0; border-radius: 10px; background: none; text-align: left; }
+#c3-results button:hover { background: rgba(255, 255, 255, 0.07); }
+#c3-results i { width: 12px; height: 12px; border-radius: 50%; flex: none; box-shadow: 0 0 8px currentColor; }
+#c3-results span { display: flex; flex-direction: column; min-width: 0; }
+#c3-results b { font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#c3-results small { font-size: 12.5px; color: var(--muted); }
+.c3-empty { padding: 12px; color: var(--muted); text-align: center; font-size: 14px; }
+.c3-tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.c3-icon { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--glass-2); display: grid; place-items: center; }
+.c3-icon:hover { background: rgba(255, 255, 255, 0.12); }
+.c3-icon svg { width: 19px; height: 19px; fill: none; stroke: var(--text); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.c3-icon .ic-play { fill: var(--text); stroke: none; }
+.lang-toggle { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--glass-2); }
+.lang-toggle button { border: 0; background: transparent; height: 32px; min-width: 38px; border-radius: 999px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.lang-toggle button[aria-pressed="true"] { background: var(--text); color: var(--sky); }
+
+/* ---------- 3D area ---------- */
+.c3-canvas { position: fixed; inset: 0; }
+.c3-canvas canvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+.c3-canvas canvas:active { cursor: grabbing; }
+
+/* ---------- Legend ---------- */
+.c3-legend {
+  position: fixed; left: 16px; bottom: 16px; z-index: 10; max-width: min(340px, calc(100% - 32px));
+  background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: 13px; color: var(--text-2);
+}
+.c3-legend summary { cursor: pointer; padding: 10px 14px; font-weight: 700; color: var(--text); list-style: none; }
+.c3-legend summary::-webkit-details-marker { display: none; }
+.c3-legend summary::before { content: "▸ "; color: var(--muted); }
+.c3-legend[open] summary::before { content: "▾ "; }
+.c3-legend ul { list-style: none; margin: 0; padding: 0 14px 6px; display: grid; gap: 6px; }
+.c3-legend li { display: flex; align-items: baseline; gap: 9px; }
+.c3-legend i { width: 11px; height: 11px; border-radius: 50%; flex: none; transform: translateY(1px); box-shadow: 0 0 10px currentColor; }
+.c3-legend small { color: var(--muted); font-size: 12px; }
+.c3-legend em { font-style: normal; color: var(--muted); font-size: 12px; margin-left: 2px; }
+.c3-legend-note { margin: 4px 0 0; padding: 0 14px 12px; font-size: 12px; color: var(--muted); }
+
+/* ---------- Hint, tooltip ---------- */
+.c3-hint {
+  position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9; margin: 0;
+  padding: 8px 14px; border-radius: 999px; background: var(--glass); border: 1px solid var(--line);
+  font-size: 13px; color: var(--text-2); white-space: nowrap; transition: opacity 0.8s; pointer-events: none;
+}
+.c3-hint.faded { opacity: 0; }
+.c3-tip {
+  position: fixed; z-index: 30; pointer-events: none; max-width: 280px;
+  padding: 9px 12px; border-radius: 12px; background: #f4efe6; color: #2a241d;
+  font-size: 13px; line-height: 1.35; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+}
+.c3-tip b { display: block; font-weight: 700; }
+.c3-tip span { display: block; color: #5d5246; }
+.c3-tip-line { display: flex !important; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; }
+.c3-tip-line i { width: 9px; height: 9px; border-radius: 50%; }
+
+/* ---------- Card of the chosen star ---------- */
+.c3-card {
+  position: fixed; top: calc(var(--bar-h) + 14px); right: 14px; z-index: 15; width: 340px; max-height: calc(100% - var(--bar-h) - 28px); overflow-y: auto;
+  padding: 18px; border-radius: 18px; background: var(--glass); border: 1px solid var(--line);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  animation: card-in 0.25s ease-out;
+}
+@keyframes card-in { from { opacity: 0; transform: translateY(8px); } }
+.c3-close { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--glass-2); display: grid; place-items: center; }
+.c3-close svg { width: 16px; height: 16px; fill: none; stroke: var(--text-2); stroke-width: 2.2; stroke-linecap: round; }
+.c3-card-head { display: flex; gap: 14px; align-items: center; padding-right: 30px; }
+.c3-avatar { position: relative; width: 62px; height: 62px; border-radius: 50%; flex: none; overflow: hidden; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 21px; border: 2px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 22px rgba(255, 255, 255, 0.15); }
+.c3-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.c3-num { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.c3-card h2 { margin: 2px 0 2px; font-family: var(--font-display); font-weight: 600; font-size: 21px; line-height: 1.15; }
+.c3-card h2.unknown { font-style: italic; color: var(--text-2); }
+.c3-life { margin: 0; font-size: 13.5px; color: var(--text-2); }
+.c3-rel { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--glass-2); }
+.c3-rel span { display: block; font-size: 12px; color: var(--muted); }
+.c3-rel strong { font-size: 16.5px; }
+.c3-line { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+.c3-line i { width: 11px; height: 11px; border-radius: 50%; flex: none; box-shadow: 0 0 10px currentColor; }
+.c3-line small { font-weight: 400; color: var(--muted); }
+.c3-desc { margin: 12px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--text); }
+.c3-note { margin: 12px 0 0; font-size: 12.5px; color: var(--gold); }
+.c3-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.c3-btn { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--glass-2); color: var(--text); font-weight: 600; font-size: 13.5px; text-decoration: none; }
+.c3-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.c3-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.c3-btn.primary:hover { filter: brightness(1.08); }
+
+.c3-fallback { position: fixed; inset: 0; z-index: 40; display: grid; place-content: center; gap: 12px; text-align: center; padding: 24px; background: var(--sky); }
+.c3-fallback p { max-width: 420px; font-size: 16px; color: var(--text-2); }
+.c3-fallback a { color: var(--gold); font-weight: 600; }
+
+/* ---------- Phones ---------- */
+@media (max-width: 760px) {
+  :root { --bar-h: 108px; }
+  .c3-bar { flex-wrap: wrap; align-content: center; gap: 8px 10px; padding: 8px 12px; }
+  .c3-back span { display: none; }
+  .c3-back { width: 38px; padding: 0; justify-content: center; }
+  .c3-titles { flex: 1 1 0; }
+  .c3-titles h1 { font-size: 17px; overflow: hidden; text-overflow: ellipsis; }
+  .c3-search { order: 3; flex: 1 1 100%; max-width: none; margin: 0; }
+  .c3-tools { gap: 6px; }
+  .c3-icon { width: 38px; height: 38px; }
+  .c3-legend { left: 10px; bottom: 10px; }
+  .c3-hint { display: none; }
+  .c3-card { top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62dvh; border-radius: 20px 20px 0 0; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) { .c3-card { animation: none; } }

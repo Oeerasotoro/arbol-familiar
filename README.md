@@ -1,6 +1,6 @@
 # Familia Eraso Toro — interactive family tree
 
-A view-only family tree website. Visitors can search for anyone, open their profile, view the whole tree from any person's point of view, and compare two people to see how they are related. Only you edit it.
+A view-only family tree website. Visitors can search for anyone, open their profile, view the whole tree from any person's point of view, compare two people to see how they are related, play a guessing game about the family, and explore everyone as a 3D constellation. Only you edit it.
 
 ## What is in this folder
 
@@ -8,16 +8,20 @@ A view-only family tree website. Visitors can search for anyone, open their prof
 |---|---|---|
 | `family-data.js` | Everyone in the tree: names, parents, photos, descriptions, biographies, site title | **Yes, this is the main file** |
 | `photos/` | Photo files | Yes, add photos here |
-| `index.html` | Page skeleton | No |
-| `css/styles.css` | Colours and layout | Only to change the look |
+| `index.html` | The tree page | No |
+| `3d.html` | The 3D view ("Vista 3D") | No |
+| `css/styles.css` | Colours and layout of the tree | Only to change the look |
+| `css/constellation.css` | Colours and layout of the 3D view | Only to change the look |
 | `js/i18n.js` | All words in Spanish and English | Only to reword labels |
 | `js/kinship.js` | Relationship calculations | No |
-| `js/app.js` | Drawing and buttons | No |
-| `lib/` | Two open-source libraries (d3 and dagre) | No |
+| `js/lines.js` | Colours of each family branch | Only to change a branch colour |
+| `js/app.js` | Drawing the tree, buttons and the game | No |
+| `js/constellation.js` | Drawing the 3D view | No |
+| `lib/` | Open-source libraries: d3 and dagre (tree), three.js (3D view) | No |
 
 ## Preview on your computer
 
-Double-click `index.html`. It opens in your browser and works offline. Refresh the page after each edit to `family-data.js`.
+Double-click `index.html`. It opens in your browser and works offline. Refresh the page after each edit to `family-data.js`. The 3D view (`3d.html`) also opens this way; both pages read the same `family-data.js`.
 
 ## Put it online with GitHub Pages (free, about 10 minutes)
 
@@ -35,6 +39,8 @@ Double-click `index.html`. It opens in your browser and works offline. Refresh t
 Edit files directly on GitHub: open the repository, click `family-data.js`, click the pencil icon (**Edit**), make your change, then click **Commit changes**. The live site updates within a minute or two. If you still see the old version, do a hard refresh (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac).
 
 To add photos: open the `photos` folder on GitHub → **Add file** → **Upload files** → drag the photo in → **Commit changes**.
+
+When a new version adds files (Version 13 added `3d.html`, `css/constellation.css`, `js/lines.js`, `js/constellation.js` and three files in `lib/`), upload the whole folder again with **Add file** → **Upload files**, dragging in everything inside it. GitHub replaces the files that changed and adds the new ones; nothing needs deleting first.
 
 ## Common edits
 
@@ -109,7 +115,14 @@ Text goes between straight double quotes. If the text itself contains a double q
 - **Family view.** The tree shows the blood family of the person it is centred on, plus the partners who connect to that family. A partner's own relatives (parents, siblings…) stay hidden behind a purple **Ver familia** pill on the partner's card; clicking the card or the pill shows them, and **Ocultar familia** hides them again. Making anyone the focus starts again from that person's family, with every branch closed.
 - **Family at a glance.** Under "Viendo el árbol como …" a short summary counts the focus person's aunts and uncles, first cousins, great-aunts and great-uncles and other relatives; **Ver resumen** opens the full list. Every profile has the same summary from that person's point of view. Counts include everyone recorded, also people in closed branches.
 
-Nothing needs to be set up for this: it is worked out from `father`, `mother`, `partners` and `notPartners` in `family-data.js`.
+- **Colours by branch.** Each card has a coloured stripe and photo circle that show which branch of the focus person's family they belong to: close family (terracotta), then one colour per grandparent, named after that grandparent's surname (for Oscar: Eraso, Hernández, Toro and Riascos), plus in-laws and extended family (grey). Partners take the colour of the relative they are with. A surname keeps its colour whoever is the focus person. The legend explains the colours and has a switch to turn them off.
+- **Animations.** When the focus person changes or a branch opens, cards glide to their new places instead of jumping; the path between two compared people shows small lights moving from A to B. Visitors whose device asks for reduced motion see no animations.
+- **Game: ¿Cómo estamos emparentados?** The **Juego** button opens a quiz: two relatives are shown and the visitor picks what one is to the other from four answers. Each answer explains the chain of links ("es hija de …, quien es hermana de …") and **Ver en el árbol** lights up the path. "Sobre Oscar" asks about the focus person; "Entre dos familiares" picks any two relatives. Only named people and confirmed links are used.
+- **3D view.** The **Vista 3D** button opens `3d.html`: everyone as a star, each generation a ring (oldest at the top), coloured by branch. Drag to turn it, scroll or pinch to zoom, tap a star to see who it is and a gold line showing how they connect to the focus person. **Ver el árbol como esta persona** changes the point of view; **Abrir en el árbol** goes back to the tree with that profile open.
+
+Nothing needs to be set up for any of this: it is worked out from `father`, `mother`, `partners` and `notPartners` in `family-data.js`.
+
+To change a branch colour, edit the list `COLORS` at the top of `js/lines.js`.
 
 ## How relationships are calculated
 
