@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- =====================================================================
+     INDEX.HTML — the page skeleton
+     The browser opens this file first. It only sets up empty areas
+     (header, tree canvas, side panel); js/app.js fills them in.
+     You normally never edit this file.
+     ===================================================================== -->
+<html lang="es">                                              <!-- Page language; app.js switches it to "en" when English is chosen -->
+<head>
+  <meta charset="utf-8">                                      <!-- Lets accented letters (á, é, ñ) display correctly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"> <!-- Fit phone screens -->
+  <meta name="robots" content="noindex, nofollow">            <!-- Ask search engines not to list this family site -->
+  <title>Árbol familiar</title>                               <!-- Tab title; app.js replaces it with the title in family-data.js -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23b4532a'/%3E%3Cpath d='M16 7v18M10 13h12M10 13v6M22 13v6' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"> <!-- Small tree icon in the browser tab -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"> <!-- Start connecting to Google Fonts early -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"> <!-- The two typefaces used on the page -->
+  <link rel="stylesheet" href="css/styles.css">               <!-- Colours, sizes and layout -->
+</head>
+<body>
+
+  <!-- ===================== TOP BAR: title, search, compare, language ===================== -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"> <!-- Decorative tree mark next to the title -->
+        <rect width="32" height="32" rx="9"></rect>
+        <path d="M16 8v16M10 14h12M10 14v5M22 14v5"></path>
+      </svg>
+      <div class="brand-text">
+        <h1 id="site-title">Árbol familiar</h1>              <!-- Filled from SITE_SETTINGS.title -->
+        <p class="subtitle" data-i18n="subtitle"></p>        <!-- data-i18n = text comes from js/i18n.js -->
+      </div>
+    </div>
+
+    <div class="search" role="search">                       <!-- Search box and its drop-down list -->
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <input id="search-input" type="search" autocomplete="off" spellcheck="false"
+             data-i18n-placeholder="searchPlaceholder" data-i18n-aria="searchLabel"
+             role="combobox" aria-expanded="false" aria-controls="search-results">
+      <ul id="search-results" class="results" role="listbox" hidden></ul>
+    </div>
+
+    <div class="top-actions">
+      <button id="compare-open" class="btn btn-ghost" type="button">  <!-- Opens the "compare two people" panel -->
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="3"></circle><circle cx="17" cy="17" r="3"></circle><path d="M9.5 9.5l5 5"></path></svg>
+        <span data-i18n="compare"></span>
+      </button>
+      <div class="lang-toggle" role="group" data-i18n-aria="language"> <!-- Spanish / English switch -->
+        <button type="button" data-lang="es">ES</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== TREE AREA ===================== -->
+  <main id="stage" class="stage">
+    <svg id="tree" role="img" aria-label="Family tree">       <!-- The tree is drawn inside this SVG -->
+      <defs>
+        <clipPath id="avatar-clip" clipPathUnits="objectBoundingBox"><circle cx="0.5" cy="0.5" r="0.5"></circle></clipPath> <!-- Makes photos round -->
+      </defs>
+      <g id="viewport">                                       <!-- Moved and scaled when you drag or zoom -->
+        <g id="links"></g>                                    <!-- Lines between relatives -->
+        <g id="cards"></g>                                    <!-- One card per person -->
+      </g>
+    </svg>
+
+    <div class="chips">                                       <!-- Floating notes at the top of the tree -->
+      <div id="focus-chip" class="chip focus-chip"></div>     <!-- "Viewing the tree as …" -->
+      <div id="compare-chip" class="chip compare-chip" hidden></div> <!-- "Comparing A ↔ B" -->
+    </div>
+
+    <div class="zoom-controls">                               <!-- Buttons in the bottom-right corner -->
+      <button type="button" id="zoom-in" data-i18n-aria="zoomIn" data-i18n-title="zoomIn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg></button>
+      <button type="button" id="zoom-out" data-i18n-aria="zoomOut" data-i18n-title="zoomOut"><svg viewBox="0 0 24 24"><path d="M5 12h14"></path></svg></button>
+      <button type="button" id="zoom-fit" data-i18n-aria="fit" data-i18n-title="fit"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg></button>
+      <button type="button" id="zoom-center" data-i18n-aria="center" data-i18n-title="center"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg></button>
+    </div>
+
+    <details class="legend" id="legend">                      <!-- Explains the line styles -->
+      <summary data-i18n="legend"></summary>
+      <ul>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path></svg><span data-i18n="legendConfirmed"></span></li>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line lg-dashed" d="M2 5h36"></path></svg><span data-i18n="legendUnconfirmed"></span></li>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line lg-lineage" d="M2 5h36"></path></svg><span data-i18n="legendLine"></span></li>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line lg-path" d="M2 5h36"></path></svg><span data-i18n="legendPath"></span></li>
+      </ul>
+    </details>
+
+    <div id="problems" class="problems" hidden></div>          <!-- Only appears if family-data.js has a mistake -->
+  </main>
+
+  <!-- ===================== SIDE PANEL: profiles and comparisons ===================== -->
+  <aside id="panel" class="panel" aria-live="polite" hidden>
+    <button type="button" class="panel-close" data-action="close" data-i18n-aria="close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+    <div id="panel-body" class="panel-body"></div>
+  </aside>
+
+  <!-- ===================== SCRIPTS (order matters) ===================== -->
+  <script src="lib/d3.min.js"></script>        <!-- Library for zooming, dragging and animation -->
+  <script src="lib/dagre.min.js"></script>     <!-- Library that arranges people in generations -->
+  <script src="family-data.js"></script>       <!-- YOUR DATA: people, photos, stories -->
+  <script src="js/kinship.js"></script>        <!-- Works out relationships -->
+  <script src="js/i18n.js"></script>           <!-- Words in Spanish and English -->
+  <script src="js/app.js"></script>            <!-- Draws the tree and runs the buttons -->
+</body>
+</html>
