@@ -825,6 +825,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     mother: 12,
     unconfirmed: [],
     partners: [],
+    notPartners: [49],                         // Parents of Juan Camilo (#48), not a couple with Franco Camilo
     born: "1981",
     died: "",
     birthplace: "Túquerres, Nariño",
