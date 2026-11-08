@@ -23,6 +23,10 @@
                  as uncle/aunt (tío/tía).
      father      The father's person number, or null if not known.
      mother      The mother's person number, or null if not known.
+     singleParent Optional. Write  singleParent: true  for someone raised by
+                 one parent alone. The site then shows no empty slot for the
+                 other parent, and still knows that their siblings through
+                 that parent share only one parent with them.
      unconfirmed A list of parent links that are NOT confirmed yet:
                  ["father"], ["mother"], ["father", "mother"] or [].
                  Unconfirmed links are drawn with dashed lines and every
@@ -190,12 +194,9 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
 
   // ===================== FATHER'S SIBLINGS =====================
-  // These were given as "my father's siblings" without saying whether
-  // they share both of his parents, so both parent links are marked
-  // unconfirmed. Gloria Myriam (#10) and Martha Esperanza (#12) were
-  // confirmed by their children in Version 7. When you confirm the others, change
-  //     unconfirmed: ["father", "mother"]
-  // to  unconfirmed: []
+  // Children of José Ernesto Eraso Rosero (#4) and Clara Eliza Hernández (#5).
+  // All confirmed by Oscar in Version 10. If a link ever needs to be marked
+  // as not confirmed, write   unconfirmed: ["father", "mother"]
   // If one of them shares only one parent with him, change the father or mother
   // number to the right person (or to null if unknown).
   {
@@ -204,7 +205,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     gender: "male",
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
     born: "",
     died: "",
@@ -219,7 +220,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     gender: "male",
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
     born: "",
     died: "",
@@ -249,7 +250,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     gender: "female",
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
     born: "",
     died: "",
@@ -279,7 +280,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     gender: "unknown",                         // Change to "male" or "female" once known
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
     born: "",
     died: "",
@@ -604,7 +605,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
-  // Same mother as Oscar (Gloria Faney, #3), different fathers (#38, #39).
+  // Same mother as Oscar (Gloria Faney, #3). Daniel's father is Johnny Guevara (#38);
+  // Diego was raised by Gloria alone (singleParent).
   {
     id: 33,
     name: "Daniel Alfonso Guevara Toro",
@@ -624,8 +626,9 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 34,
     name: "Diego Fernando Toro Riascos",
     gender: "male",
-    father: 39,
+    father: null,
     mother: 3,
+    singleParent: true,                        // Raised by his mother alone: no father is shown or expected
     unconfirmed: [],
     partners: [],
     born: "",
@@ -637,9 +640,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
 
   // ===================== OTHER PARENTS OF OSCAR'S SIBLINGS =====================
-  // #37 (Evelyn's mother) and #39 (Diego Fernando's father) have no name yet;
-  // the site shows them as "Madre de Evelyn" and "Padre de Diego" until you
-  // fill in "name". None of these parents are recorded as couples
+  // #37 (Evelyn's mother) has no name yet; the site shows her as
+  // "Madre de Evelyn" until you fill in "name". None of these parents are recorded as couples
   // with José Ernesto or Gloria (notPartners), so their relatives are not
   // counted as in-laws. If one of them is a current partner, delete that
   // person's notPartners line.
@@ -710,25 +712,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     description: "",
     bio: "",
   },
-  {
-    id: 39,
-    name: "",                                  // Father of Diego Fernando — name not known yet
-    gender: "male",
-    father: null,
-    mother: null,
-    unconfirmed: [],
-    partners: [],
-    notPartners: [3],                          // Not recorded as a couple; if they are together, delete this line
-    born: "",
-    died: "",
-    birthplace: "",
-    photo: "",
-    description: {
-      es: "Padre de Diego Fernando Toro; falta su nombre.",
-      en: "Father of Diego Fernando Toro; name not known yet.",
-    },
-    bio: "",
-  },
+  // #39 was a placeholder for Diego Fernando's father; removed in Version 10
+  // (Diego was raised by his mother alone). The number stays retired.
 
   // =====================================================================
   // ADDED IN VERSION 7 — from the family questionnaire answers and the
@@ -1557,10 +1542,11 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // ----- Added in Version 8 -----
   {
     id: 93,
-    name: "Aitana Murillo Eraso",  // Daughter of Andrea (#28); her father (a Murillo) is not recorded. Name only, as agreed
+    name: "Aitana Murillo Eraso",  // Daughter of Andrea (#28). Name only, as agreed
     gender: "female",
     father: null,
     mother: 28,
+    singleParent: true,                        // Raised by her mother alone: no father is shown or expected
     unconfirmed: [],
     partners: [],
     born: "",
