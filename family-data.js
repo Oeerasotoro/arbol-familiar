@@ -17,6 +17,8 @@
      name        Full name as it should appear. Leave "" if unknown: the
                  site then shows "Madre de …" / "Padre de …" using the
                  person's children, or "Nombre desconocido".
+     nickname    Optional. What the family calls them, e.g. "Pajarita".
+                 Shown on the profile ("Le dicen …") and found by search.
      gender      "male", "female" or "unknown". Used to choose words such
                  as uncle/aunt (tío/tía).
      father      The father's person number, or null if not known.
@@ -75,7 +77,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // ===================== OSCAR =====================
   {
     id: 1,                                     // Permanent number for Oscar
-    name: "Oscar Eraso Toro",                  // Full name (second surname assumed from his parents; edit if needed)
+    name: "Oscar Ernesto Eraso Toro",  // Full name
     gender: "male",
     father: 2,                                 // Father = person #2
     mother: 3,                                 // Mother = person #3
@@ -99,7 +101,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     unconfirmed: [],
     partners: [],
     notPartners: [3],                          // Oscar's parents are not a couple, so no in-law relations between their families
-    born: "",
+    born: "1969",
     died: "",
     birthplace: "",
     photo: "",
@@ -128,7 +130,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 4,
     name: "José Ernesto Eraso Rosero",         // Paternal grandfather
     gender: "male",
-    father: null,                              // Not known yet
+    father: 40,  // Marcelino Eraso
     mother: null,                              // Not known yet
     unconfirmed: [],
     partners: [5],                             // Partner of Clara Hernández (#5)
@@ -141,10 +143,10 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 5,
-    name: "Clara Hernández",                   // Paternal grandmother
+    name: "Clara Eliza Hernández",  // Paternal grandmother
     gender: "female",
     father: null,
-    mother: null,
+    mother: 41,  // Santos Hernández
     unconfirmed: [],
     partners: [4],
     born: "",
@@ -158,10 +160,10 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // ===================== MATERNAL GRANDPARENTS =====================
   {
     id: 6,
-    name: "Andrés Toro Pantoja",               // Maternal grandfather
+    name: "Andrés Jesús Toro Pantoja",  // Maternal grandfather
     gender: "male",
-    father: 20,                                // Name not known yet (a Toro)
-    mother: 21,                                // Name not known yet (a Pantoja)
+    father: 20,  // Gonzalo Toro
+    mother: 21,  // Name not known yet (a Pantoja)
     unconfirmed: [],
     partners: [7],                             // Partner of María del Carmen (#7)
     born: "",
@@ -175,8 +177,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 7,
     name: "María del Carmen Riascos",          // Maternal grandmother (spelled like her children's surname; change to "Ríascos" if that is correct)
     gender: "female",
-    father: 23,                                // Name not known yet (a Riascos)
-    mother: null,                              // Not known yet
+    father: 23,  // Jorge Riascos
+    mother: 91,  // María Félix Torres
     unconfirmed: [],
     partners: [6],
     born: "",
@@ -190,7 +192,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // ===================== FATHER'S SIBLINGS =====================
   // These were given as "my father's siblings" without saying whether
   // they share both of his parents, so both parent links are marked
-  // unconfirmed. When you confirm them, change
+  // unconfirmed. Gloria Myriam (#10) and Martha Esperanza (#12) were
+  // confirmed by their children in Version 7. When you confirm the others, change
   //     unconfirmed: ["father", "mother"]
   // to  unconfirmed: []
   // If one of them shares only one parent with him, change the father or mother
@@ -227,17 +230,17 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 10,
-    name: "Miriam Eraso",
+    name: "Gloria Myriam Eraso Hernández",  // Oscar's aunt (listed earlier as Miriam Eraso)
     gender: "female",
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
-    born: "",
+    born: "1952",
     died: "",
     birthplace: "",
     photo: "",
-    description: "",
+    description: { es: "También conocida como Gloria Myriam Eraso de Ascuntar.", en: "Also known as Gloria Myriam Eraso de Ascuntar." },
     bio: "",
   },
   {
@@ -257,14 +260,14 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 12,
-    name: "Marta Eraso",
+    name: "Martha Esperanza Eraso Hernández",  // Oscar's aunt (listed earlier as Marta Eraso)
     gender: "female",
     father: 4,
     mother: 5,
-    unconfirmed: ["father", "mother"],
+    unconfirmed: [],
     partners: [],
-    born: "",
-    died: "",
+    born: "1953",
+    died: "1999",
     birthplace: "",
     photo: "",
     description: "",
@@ -308,7 +311,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 15,
-    name: "Magola Toro Riascos",
+    name: "María Magdalena Toro Riascos",
+    nickname: "Magola",
     gender: "female",
     father: 6,
     mother: 7,
@@ -323,7 +327,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 16,
-    name: "Flavio Toro Riascos",
+    name: "Flavio Arnulfo Toro Riascos",
     gender: "male",
     father: 6,
     mother: 7,
@@ -338,7 +342,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 17,
-    name: "Alfonso Toro Riascos",
+    name: "Jaime Alfonso Toro Riascos",
     gender: "male",
     father: 6,
     mother: 7,
@@ -353,7 +357,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 18,
-    name: "Lili Toro Riascos",
+    name: "Lilia del Carmen Toro Riascos",
+    nickname: "Lili",
     gender: "female",
     father: 6,
     mother: 7,
@@ -368,7 +373,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 19,
-    name: "José Toro Riascos",
+    name: "José Andrés Toro Riascos",  // The youngest of the nine
     gender: "male",
     father: 6,
     mother: 7,
@@ -384,24 +389,21 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
 
   // ===================== GRANDFATHER ANDRÉS'S PARENTS AND BROTHER =====================
   // Andrés and Agustín share both surnames (Toro Pantoja), so they are
-  // recorded as full brothers. Their parents' names are not known yet:
-  // fill in the name fields when you learn them.
+  // recorded as full brothers. Their father is Gonzalo Toro (#20); their
+  // mother's name (a Pantoja, #21) is not known yet.
   {
     id: 20,
-    name: "",                                  // Father of Andrés and Agustín (a Toro) — name not known yet
+    name: "Gonzalo Toro",  // Oscar's great-grandfather
     gender: "male",
     father: null,
-    mother: null,
+    mother: 68,  // Amalia Toro
     unconfirmed: [],
     partners: [21],
     born: "",
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Padre de Andrés y Agustín Toro Pantoja; falta su nombre.",
-      en: "Father of Andrés and Agustín Toro Pantoja; name not known yet.",
-    },
+    description: "",
     bio: "",
   },
   {
@@ -439,15 +441,13 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
 
   // ===================== GRANDMOTHER MARÍA DEL CARMEN'S PARENT AND SIBLINGS =====================
-  // Her siblings share her first surname, Riascos, which comes from the
-  // father, so they are linked through an unnamed father (#23). Their
-  // mothers are not recorded, so the site shows them as siblings without
-  // saying whether they share both parents. If you learn they share
-  // the same mother, add her as a new person and put her number in
-  // "mother" for María del Carmen and each sibling.
+  // Her siblings share her first surname, Riascos, from their father Jorge
+  // Riascos (#23). Their mother is not recorded, so the site shows them as
+  // siblings without saying whether they share both parents. If they share
+  // María del Carmen's mother (#91), put 91 in each sibling's "mother".
   {
     id: 23,
-    name: "",                                  // Father of María del Carmen and her siblings (a Riascos) — name not known yet
+    name: "Jorge Riascos",  // Father of María del Carmen and her siblings
     gender: "male",
     father: null,
     mother: null,
@@ -457,10 +457,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Padre de María del Carmen Riascos y sus hermanos; falta su nombre.",
-      en: "Father of María del Carmen Riascos and her siblings; name not known yet.",
-    },
+    description: "",
     bio: "",
   },
   {
@@ -480,7 +477,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 25,
-    name: "Lucho Riascos",                     // "Lucho" is usually short for Luis; use the full name if you know it
+    name: "Luis Riascos",
+    nickname: "Lucho",
     gender: "male",
     father: 23,
     mother: null,
@@ -500,7 +498,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     father: 23,
     mother: null,
     unconfirmed: [],
-    partners: [],
+    partners: [84],
     born: "",
     died: "",
     birthplace: "",
@@ -510,20 +508,17 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 27,
-    name: "",                                  // Name still to be confirmed
-    gender: "unknown",
+    name: "Mardonio Riascos",
+    gender: "male",
     father: 23,
     mother: null,
     unconfirmed: [],
-    partners: [],
+    partners: [83],
     born: "",
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Hermano o hermana de María del Carmen Riascos; falta el nombre.",
-      en: "A sibling of María del Carmen Riascos; name still to be confirmed.",
-    },
+    description: "",
     bio: "",
   },
 
@@ -540,7 +535,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     father: 2,
     mother: 35,
     unconfirmed: [],
-    partners: [],
+    partners: [67],
     born: "",
     died: "",
     birthplace: "",
@@ -550,18 +545,18 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 29,
-    name: "Viviana Eraso Eraso",
+    name: "Viviana Carolina Eraso Eraso",
     gender: "female",
     father: 2,
     mother: 35,
     unconfirmed: [],
     partners: [],
-    born: "",
+    born: "1990",
     died: "",
-    birthplace: "",
+    birthplace: "Túquerres, Nariño",
     photo: "",
-    description: "",
-    bio: "",
+    description: "Trabajando en el INPEC",
+    bio: "Soy guía canino en el INPEC.",
   },
   {
     id: 30,
@@ -627,7 +622,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 34,
-    name: "Diego Fernando Toro",
+    name: "Diego Fernando Toro Riascos",
     gender: "male",
     father: 39,
     mother: 3,
@@ -637,7 +632,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     died: "",
     birthplace: "",
     photo: "",
-    description: "",
+    description: { es: "Lleva los dos apellidos de su mamá, Toro Riascos.", en: "He carries both of his mother's surnames, Toro Riascos." },
     bio: "",
   },
 
@@ -652,12 +647,12 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 35,
     name: "Magaly Eraso",                      // Mother of Andrea and Viviana. Not the same person as Magaly Eraso #11 (José Ernesto's sister)
     gender: "female",
-    father: null,
-    mother: null,
+    father: 65,  // Luis Mora
+    mother: 66,  // María Ofelia Eraso
     unconfirmed: [],
     partners: [],
     notPartners: [2],                          // Not recorded as a couple; if they are together, delete this line
-    born: "",
+    born: "1968",
     died: "",
     birthplace: "",
     photo: "",
@@ -735,13 +730,855 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
+  // =====================================================================
+  // ADDED IN VERSION 7 — from the family questionnaire answers and the
+  // voice messages from Oscar's mother (November 2026).
+  // =====================================================================
+
+  // ----- Paternal great-grandparents -----
+  {
+    id: 40,
+    name: "Marcelino Eraso",  // Father of José Ernesto Eraso Rosero (#4)
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 41,
+    name: "Santos Hernández",  // Mother of Clara Eliza Hernández (#5)
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Aunt Martha Esperanza (#12): husband, his parents, daughters, grandchildren -----
+  // Dates the sources disagree on are left blank: Bernardo's death (2023 or 2024),
+  // Nidia's birth (1985 or 1987) and Juan Camilo's birth (2004 or 2007).
+  {
+    id: 42,
+    name: "Bernardo Efrén Cerón Martínez",  // Husband of Martha Esperanza (#12)
+    gender: "male",
+    father: 43,
+    mother: 44,
+    unconfirmed: [],
+    partners: [],
+    born: "1933",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 43,
+    name: "Virgilio Cerón",
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [44],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 44,
+    name: "Agarista Martínez",
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [43],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 45,
+    name: "Margaret Cerón Eraso",  // She asked to show only her name: leave the other fields empty
+    gender: "female",
+    father: 42,
+    mother: 12,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 46,
+    name: "Martha Lucía Cerón Eraso",
+    nickname: "Pajarita",
+    gender: "female",
+    father: 42,
+    mother: 12,
+    unconfirmed: [],
+    partners: [],
+    born: "1981",
+    died: "",
+    birthplace: "Túquerres, Nariño",
+    photo: "",
+    description: "Contadora, vivo en Popayán",
+    bio: "Nací en Túquerres. La familia Eraso se caracteriza por el buen genio de la mayoría de sus integrantes.",
+  },
+  {
+    id: 47,
+    name: "Nidia Alejandra Cerón Eraso",
+    gender: "female",
+    father: 42,
+    mother: 12,
+    unconfirmed: [],
+    partners: [51],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 48,
+    name: "Juan Camilo Pantoja Cerón",
+    nickname: { es: "Lienzo (nombre artístico)", en: "Lienzo (stage name)" },
+    gender: "male",
+    father: 49,
+    mother: 46,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "Túquerres, Nariño",
+    photo: "",
+    description: "Productor musical, vivo en Cali",
+    bio: "Me crié en Túquerres, viví 5 años en Popayán y estudié un año de piano instrumental en Unicauca. Ahora soy músico productor de Icesi, sigo estudiando y trabajo como ingeniero de sonido en estudios de grabación.\nRecuerdo estar en la casa de mi abuelo Patolin el día después del funeral, con toda la familia, sabiendo que la alegría es herencia y es nuestro deber mantenerla sanamente: todos compartimos, todos reímos y sentimos profundamente.",
+  },
+  {
+    id: 49,
+    name: "Franco Camilo Pantoja Orbes",  // Father of Juan Camilo
+    gender: "male",
+    father: 50,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 50,
+    name: "Luis Pantoja",  // Father of Franco Camilo
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 51,
+    name: "Miguel Yamid Pantoja Saldaña",  // Partner of Nidia Alejandra
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [47],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 52,
+    name: "Samuel Pantoja Cerón",  // Name only, as agreed
+    gender: "male",
+    father: 51,
+    mother: 47,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 53,
+    name: "Luciana Pantoja Cerón",  // Name only, as agreed
+    gender: "female",
+    father: 51,
+    mother: 47,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Aunt Gloria Myriam (#10): husband, his parents, children, grandchildren -----
+  {
+    id: 54,
+    name: "Luis Eduardo Ascuntar Ascuntar",  // Husband of Gloria Myriam (#10)
+    gender: "male",
+    father: 56,
+    mother: 55,
+    unconfirmed: [],
+    partners: [],
+    born: "1948",
+    died: "2025",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 55,
+    name: "Beatris Ascuntar",
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [56],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 56,
+    name: "Hermógenes Ascuntar",
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [55],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 57,
+    name: "Jairo Libardo Ascuntar Eraso",
+    gender: "male",
+    father: 54,
+    mother: 10,
+    unconfirmed: [],
+    partners: [58],
+    born: "1970",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 58,
+    name: "Clara Esperanza Díaz Montenegro",  // Partner of Jairo Libardo
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [57],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 59,
+    name: "Edith Liliana Ascuntar Eraso",
+    nickname: "Lily",
+    gender: "female",
+    father: 54,
+    mother: 10,
+    unconfirmed: [],
+    partners: [60],
+    born: "1972",
+    died: "",
+    birthplace: "Túquerres, Nariño",
+    photo: "",
+    description: "Contadora y comerciante; vive en Túquerres, Nariño",
+    bio: "Nací en Túquerres; soy independiente, dedicada al comercio. Entre los miles de recuerdos, me encantan los vividos en la finca de mis abuelos: tomar café con tortillas en la choza donde tenían la cocina con fogón de leña, buscar huevitos en los matorrales, escuchar a mis abuelos contar sus historias alrededor del fogón. De grandes, las temperadas en vacaciones, las tomatas y bailes con mi abuelo, mis tíos y primos.",
+  },
+  {
+    id: 60,
+    name: "Jesús Eduardo Eraso Riascos",  // Partner of Edith Liliana
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [59],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 61,
+    name: "Juan José Eraso Ascuntar",
+    gender: "male",
+    father: 60,
+    mother: 59,
+    unconfirmed: [],
+    partners: [],
+    born: "2004",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  // Jairo Libardo's children, name only. Jairo Esteban's surname (Díaz) matches Clara
+  // Esperanza Díaz Montenegro; the mothers of Sara Meliza (a Pantoja) and Ibon Alejandra
+  // (an Aguilera) are not recorded.
+  {
+    id: 62,
+    name: "Sara Meliza Ascuntar Pantoja",
+    gender: "female",
+    father: 57,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 63,
+    name: "Ibon Alejandra Ascuntar Aguilera",
+    gender: "female",
+    father: 57,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 64,
+    name: "Jairo Esteban Ascuntar Díaz",
+    gender: "male",
+    father: 57,
+    mother: 58,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Magaly Eraso's (#35) parents, from Viviana; Andrea's partner -----
+  {
+    id: 65,
+    name: "Luis Mora",  // Father of Magaly Eraso (#35)
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 66,
+    name: "María Ofelia Eraso",  // Mother of Magaly Eraso (#35)
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 67,
+    name: "Sergio Pantoja Rosero",  // Partner of Andrea (#28)
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [28],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Toro side: great-great-grandmother, two more children, cousins -----
+  {
+    id: 68,
+    name: "Amalia Toro",  // Mother of Gonzalo Toro (#20)
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 69,
+    name: "Janet Lucía Toro Riascos",
+    gender: "female",
+    father: 6,
+    mother: 7,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 70,
+    name: "Miguel Gonzalo Toro Riascos",
+    gender: "male",
+    father: 6,
+    mother: 7,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  // Cousins: children of Gloria's brothers and sisters. Fathers or mothers outside the
+  // Toro Riascos family are not recorded yet.
+  {
+    id: 71,
+    name: "Claudia Lisseth Santander Toro",
+    gender: "female",
+    father: null,
+    mother: 14,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 72,
+    name: "Yesenia Carolina Toro Riascos",
+    gender: "female",
+    father: null,
+    mother: 14,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: { es: "Lleva los dos apellidos de su mamá, Toro Riascos.", en: "She carries both of her mother's surnames, Toro Riascos." },
+    bio: "",
+  },
+  {
+    id: 73,
+    name: "Yuli Natali Toro Riascos",
+    gender: "female",
+    father: null,
+    mother: 15,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: { es: "Lleva los dos apellidos de su mamá, Toro Riascos.", en: "She carries both of her mother's surnames, Toro Riascos." },
+    bio: "",
+  },
+  {
+    id: 74,
+    name: "John Alexander Caicedo Toro",
+    gender: "male",
+    father: null,
+    mother: 15,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 75,
+    name: "Karen Yulieth Toro",
+    gender: "female",
+    father: 17,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 76,
+    name: "Cristian Toro",
+    gender: "male",
+    father: 17,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 77,
+    name: "Andrés Toro",
+    gender: "male",
+    father: 17,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 78,
+    name: "Sneyder Andrés Goyes Toro",
+    gender: "male",
+    father: null,
+    mother: 69,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 79,
+    name: "Wilmer Alexis Goyes Toro",
+    gender: "male",
+    father: null,
+    mother: 69,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 80,
+    name: "Andrea Toro",
+    gender: "female",
+    father: 19,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 81,
+    name: "Juan José Toro",
+    gender: "male",
+    father: 19,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 82,
+    name: "Saray Toro",
+    gender: "female",
+    father: 19,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Riascos side: grandmother María del Carmen's siblings, spouses, mother -----
+  // Her siblings are linked through their father, Jorge Riascos (#23). Whether
+  // they also share her mother (#91) is not recorded yet.
+  {
+    id: 83,
+    name: "Maura Acosta",  // Wife of Mardonio Riascos (#27)
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [27],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 84,
+    name: "Alonso Jurado",  // Husband of Tulia Riascos (#26)
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [26],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 85,
+    name: "Luisa Riascos",
+    gender: "female",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [86],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 86,
+    name: "Martín Rodríguez",  // Husband of Luisa Riascos
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [85],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 87,
+    name: "Leonel Riascos",
+    gender: "male",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 88,
+    name: "Ricardo Riascos",
+    gender: "male",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 89,
+    name: "José Riascos",
+    gender: "male",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 90,
+    name: "Fabiola Riascos",
+    gender: "female",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 91,
+    name: "María Félix Torres",  // Mother of María del Carmen; Oscar's great-grandmother
+    gender: "female",
+    father: null,
+    mother: 92,
+    unconfirmed: [],
+    partners: [23],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 92,
+    name: "Rosario Torres",  // Mother of #91; María del Carmen's grandmother
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ----- Added in Version 8 -----
+  {
+    id: 93,
+    name: "Aitana Murillo Eraso",  // Daughter of Andrea (#28); her father (a Murillo) is not recorded. Name only, as agreed
+    gender: "female",
+    father: null,
+    mother: 28,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
   // ===================== ADD NEW PEOPLE BELOW THIS LINE =====================
   // Copy this template, remove the // at the start of each line,
   // and give it the next free number.
   //
   // {
-  //   id: 40,
+  //   id: 94,
   //   name: "",
+  //   nickname: "",
   //   gender: "unknown",
   //   father: null,
   //   mother: null,
@@ -757,4 +1594,4 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
 
 ];                                             // The list of people ends here — keep this line
 
-// Highest person number used so far: 39   ← update this note when you add someone
+// Highest person number used so far: 93   ← update this note when you add someone
