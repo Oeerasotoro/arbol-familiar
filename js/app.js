@@ -45,6 +45,9 @@
     picking: null,                                         // Which compare slot ('a' or 'b') is choosing a person
     relations: new Map(),                                  // person number -> relation to the focus person
     component: new Set(),                                  // everyone connected to the focus by any chain of links
+    visible: new Set(),                                    // people currently drawn on the tree
+    expanded: new Set(),                                   // relatives by marriage whose own family branch is open
+    forced: new Set(),                                     // people shown because a visitor asked for them directly
   };
 
   /* ===================================================================
@@ -119,7 +122,7 @@
      generations so that family lines cross as little as possible.
      =================================================================== */
   const COUPLE_GAP = 44;                                   // Space between two partners' cards
-  const layout = { people: new Map(), unions: new Map() };
+  const layout = { people: new Map(), unions: new Map(), drawn: new Map() };
 
   function sideBySide(id) {                                // Who sits next to whom: partners and parents of the same child
     const s = new Set(fam.partners.get(id));
@@ -127,10 +130,10 @@
     return s;
   }
 
-  function buildHouseholds() {                             // Group people who are partners (directly or in a chain)
+  function buildHouseholds(list) {                         // Group the drawn people who are partners (directly or in a chain)
     const groupOf = new Map();                             // person number -> household index
     const groups = [];
-    people.forEach(function (p) {
+    list.forEach(function (p) {
       if (groupOf.has(p.id)) return;                       // Already placed in a household
       const members = [];
       const stack = [p.id];
@@ -139,6 +142,7 @@
         const cur = stack.pop();
         members.push(cur);
         sideBySide(cur).forEach(function (q) {           // partners and co-parents share a household box
+          if (!state.visible.has(q)) return;             // hidden people are not drawn
           if (!groupOf.has(q)) { groupOf.set(q, groups.length); stack.push(q); }
         });
       }
@@ -157,7 +161,7 @@
   // children with, those with more children first.
   function orderHousehold(ids) {
     if (ids.length <= 2) return ids.slice().sort(function (a, b) { return a - b; });
-    const inGroup = new Set(ids);
+    const inGroup = new Set(ids);                          // (only drawn people are passed in)
     const nb = function (id) { return Array.from(sideBySide(id)).filter(function (q) { return inGroup.has(q); }); };
     let best = [], bestScore = -1;
     if (ids.length <= 12) {                                // Try every chain (households are small)
@@ -209,7 +213,7 @@
     let maxLevel = 0;
     hh.groups.forEach(function (grp) {
       const spans = [];
-      fam.unions.forEach(function (u) {
+      layout.drawn.forEach(function (u) {
         if (u.parents.length !== 2 || hh.groupOf.get(u.parents[0]) !== hh.groups.indexOf(grp)) return;
         const i1 = grp.members.indexOf(u.parents[0]), i2 = grp.members.indexOf(u.parents[1]);
         if (i1 < 0 || i2 < 0 || Math.abs(i1 - i2) === 1) return; // next to each other: drawn side to side
@@ -231,7 +235,19 @@
   const UNDER_STEP = 9;                                    // Pixels between under-line levels
 
   function computeLayout() {
-    const hh = buildHouseholds();
+    const vis = state.visible;
+    const shown = people.filter(function (p) { return vis.has(p.id); }); // only the people drawn right now
+    layout.people.clear();
+    layout.unions.clear();
+    layout.drawn = new Map();                              // families with at least one drawn parent, and their drawn members
+    fam.unions.forEach(function (u) {
+      const ps = u.parents.filter(function (id) { return vis.has(id); });
+      const cs = u.children.filter(function (id) { return vis.has(id); });
+      if (!ps.length) return;                              // no parent drawn: nothing to connect from
+      if (!cs.length && ps.length < 2) return;             // a lone parent with no drawn children: no line needed
+      layout.drawn.set(u.key, { key: u.key, parents: ps, children: cs });
+    });
+    const hh = buildHouseholds(shown);
     const under = underLevels(hh);
     const rowGap = 74 + Math.max(0, under.maxLevel - 3) * UNDER_STEP; // more room between rows if many under-lines
     const g = new dagre.graphlib.Graph();                  // An empty layout graph
@@ -242,8 +258,9 @@
       g.setNode(grp.key, { width: n * CARD_W + (n - 1) * COUPLE_GAP, height: CARD_H });
     });
     const weights = new Map();                             // household -> household links, counted
-    people.forEach(function (p) {
+    shown.forEach(function (p) {
       fam.parentLinks.get(p.id).forEach(function (l) {
+        if (!vis.has(l.id)) return;                        // parent hidden in a closed branch
         const from = hh.groups[hh.groupOf.get(l.id)].key;
         const to = hh.groups[hh.groupOf.get(p.id)].key;
         if (from === to) return;                           // Ignore odd data where a parent shares the child's household
@@ -264,7 +281,7 @@
       });
     });
 
-    fam.unions.forEach(function (u) {                      // Where each family's lines meet
+    layout.drawn.forEach(function (u) {                    // Where each family's lines meet
       const ps = u.parents.map(function (id) { return layout.people.get(id); });
       const bottom = Math.max.apply(null, ps.map(function (p) { return p.y; })) + CARD_H / 2; // lowest card edge
       if (ps.length === 2 && under.levels.has(u.key)) {    // Couple not side by side: meet on a line under the cards
@@ -296,12 +313,14 @@
     });
     rows.forEach(function (row) { row.sort(function (a, b) { return a.x - b.x; }); });
 
-    function xOf(id) {                                     // Current x of a person
+    function xOf(id) {                                     // Current x of a person (null if not drawn)
+      if (!hh.groupOf.has(id)) return null;
       const grp = hh.groups[hh.groupOf.get(id)];
       return grp.x + memberOffset(grp, grp.members.indexOf(id));
     }
-    function parentsX(id) {                                // Centre point of a person's parents, or null
-      const xs = fam.parentLinks.get(id).map(function (l) { return xOf(l.id); });
+    function shownKids(id) { return fam.children.get(id).filter(function (c) { return hh.groupOf.has(c); }); }
+    function parentsX(id) {                                // Centre point of a person's drawn parents, or null
+      const xs = fam.parentLinks.get(id).map(function (l) { return xOf(l.id); }).filter(function (x) { return x != null; });
       return xs.length ? xs.reduce(function (s, x) { return s + x; }, 0) / xs.length : null;
     }
     function orient(grp) {                                 // Flip a household so each member sits on the side of their own parents
@@ -330,12 +349,12 @@
     }
     function wantFromChildren(grp) {                       // Where it would like to be, judging by the row below
       const kids = new Set();
-      grp.members.forEach(function (id) { fam.children.get(id).forEach(function (c) { kids.add(c); }); });
+      grp.members.forEach(function (id) { shownKids(id).forEach(function (c) { kids.add(c); }); });
       if (!kids.size) return null;
       let sum = 0;
       kids.forEach(function (c) { sum += xOf(c); });
       let mid = 0;                                         // the centre of the members who have these children
-      const parentsWithKids = grp.members.map(function (id, i) { return fam.children.get(id).length ? memberOffset(grp, i) : null; }).filter(function (v) { return v != null; });
+      const parentsWithKids = grp.members.map(function (id, i) { return shownKids(id).length ? memberOffset(grp, i) : null; }).filter(function (v) { return v != null; });
       mid = parentsWithKids.reduce(function (s, v) { return s + v; }, 0) / parentsWithKids.length;
       return sum / kids.size - mid;
     }
@@ -418,7 +437,7 @@
   }
 
   function drawLinks() {
-    fam.unions.forEach(function (u) {
+    layout.drawn.forEach(function (u) {                    // u.parents / u.children hold only drawn people
       const up = layout.unions.get(u.key);                 // Where this family's lines meet
       const parentBottom = up.parentBottom;                // Lowest edge of the parents' cards
       const kids = u.children.map(function (id) { return { id: id, pos: layout.people.get(id) }; });
@@ -478,7 +497,7 @@
   const tipEl = document.getElementById('link-tip');       // the small label that names who is connected
   function highlightUnion(key, evt) {
     clearHighlight();
-    const u = fam.unions.get(key), parts = unionLines.get(key);
+    const u = layout.drawn.get(key), parts = unionLines.get(key);
     if (!u || !parts) return;
     litUnion = key;
     svg.classed('lighting', true);                         // fades everything else a little
@@ -529,6 +548,7 @@
 
   function drawCards() {
     people.forEach(function (p) {
+      if (!state.visible.has(p.id)) return;               // hidden in a closed branch
       const pos = layout.people.get(p.id);
       const g = cardLayer.append('g')                      // One group per person
         .attr('class', 'card')
@@ -556,8 +576,8 @@
       const nameEl = g.append('text').attr('class', 'card-name' + (p.name ? '' : ' unknown')).attr('x', TEXT_X).attr('y', 45);
       wrapText(nameEl, nameOf(p.id), TEXT_W, 2, 17);       // Name on up to two lines
       g.append('text').attr('class', 'card-meta').attr('x', TEXT_X).attr('y', CARD_H - 12); // "#12 · 1950 – 2010"
-      g.on('click', function () { openProfile(p.id, { pan: false }); });
-      g.on('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfile(p.id, { pan: false }); } });
+      g.on('click', function () { cardClicked(p.id); });
+      g.on('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); cardClicked(p.id); } });
       cardEls.set(p.id, g);
     });
     updateCardMeta();
@@ -635,7 +655,7 @@
     svg.transition().duration(duration).ease(d3.easeCubicInOut).call(zoom.transform, t);
   }
   function centerOn(id, duration) {                        // Bring one person's card to the middle
-    const pos = layout.people.get(id);
+    const pos = layout.people.get(id);                     // (undefined if the person is not drawn)
     if (!pos) return;
     const k = Math.max(d3.zoomTransform(svg.node()).k, isPhone() ? 0.72 : 0.85);
     moveTo(pos.x, pos.y, Math.min(k, 1.2), duration == null ? 750 : duration);
@@ -648,7 +668,9 @@
     fitPeople(ids, duration, isPhone() ? 0.5 : 0.7, isPhone() ? 0.8 : 0.95, id); // Never zoom out so far that names get hard to read
   }
   function fitPeople(ids, duration, minK, maxK, anchorId) { // Zoom so that all these people are visible
+    ids = ids.filter(function (id) { return layout.people.has(id); }); // only people drawn right now
     if (!ids.length) return;
+    if (anchorId != null && !layout.people.has(anchorId)) anchorId = null;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     ids.forEach(function (id) {
       const p = layout.people.get(id);
@@ -663,6 +685,7 @@
   }
   function ensureVisible(id) {                             // Move only if the card is hidden or off-screen
     const pos = layout.people.get(id);
+    if (!pos) return;
     const t = d3.zoomTransform(svg.node());
     const sx = t.applyX(pos.x), sy = t.applyY(pos.y);
     const box = visibleBox();
@@ -703,12 +726,15 @@
       if (rel.type === 'none') rel.connected = state.component.has(p.id);
       state.relations.set(p.id, rel);
     });
-    updateCardLabels();
-    updateLineage();
+    state.expanded.clear();                                // every relative-by-marriage branch starts closed
+    state.forced.clear();
+    state.visible = computeVisible();
+    renderTree(null);                                      // draw the new focus person's family
     updateChips();
     writeHash();
     if (state.panel === 'profile' && state.selected != null) renderProfile(state.selected); // profile shows the new relationship
     if (state.panel === 'compare') renderCompare();
+    if (state.panel === 'summary') renderSummaryPanel();   // the summary follows the new focus person
     if (opts.recenter !== false) showNeighborhood(id, opts.duration); // Glide to the new focus person
   }
 
@@ -787,8 +813,9 @@
       onPath.add(step.to);
     });
     pathNodes = Array.from(onPath);
-    pathNodes.forEach(function (id) { cardEls.get(id).classed('on-path', true); });
+    pathNodes.forEach(function (id) { if (cardEls.has(id)) cardEls.get(id).classed('on-path', true); });
     [[a, 'A'], [b, 'B']].forEach(function (pair) {        // Little "A" and "B" badges on the two cards
+      if (!cardEls.has(pair[0])) return;
       const badge = cardEls.get(pair[0]).append('g').attr('class', 'end-badge').attr('transform', 'translate(' + (CARD_W - 4) + ',4)');
       badge.append('circle').attr('r', 11);
       badge.append('text').text(pair[1]);
@@ -797,6 +824,125 @@
   }
   function raisePath() {
     linkEls.forEach(function (el) { if (el.classed('on-path')) el.raise(); });
+  }
+
+  /* ===================================================================
+     9b. FAMILY BRANCHES OF RELATIVES BY MARRIAGE
+     The tree shows the focus person's blood family plus the partners
+     who connect to it. A partner's own family (parents, siblings…) is a
+     closed "branch" until a visitor clicks that partner.
+     =================================================================== */
+  function computeVisible() {                              // Who should be drawn right now
+    const vis = new Set(Kinship.familyCore(fam, state.focus));
+    state.forced.forEach(function (id) { vis.add(id); });
+    let grew = true;
+    while (grew) {                                         // open branches can contain further open branches
+      grew = false;
+      state.expanded.forEach(function (s) {
+        if (!vis.has(s)) return;                           // its card is not shown, so its branch stays closed
+        Kinship.familyCore(fam, s).forEach(function (q) { if (!vis.has(q)) { vis.add(q); grew = true; } });
+      });
+    }
+    return vis;
+  }
+  function isByMarriage(id) {                              // Not a blood relative of the focus person
+    const rel = state.relations.get(id);
+    return id !== state.focus && !!rel && rel.type !== 'blood' && rel.type !== 'self';
+  }
+  function hiddenBranch(id) {                              // People that opening this person's branch would reveal
+    if (!isByMarriage(id) || !state.visible.has(id)) return [];
+    return Array.from(Kinship.familyCore(fam, id)).filter(function (q) { return !state.visible.has(q); });
+  }
+  function hasBranch(id) { return state.expanded.has(id) || hiddenBranch(id).length > 0; }
+
+  function toggleBranch(id, open) {                        // Open or close a relative-by-marriage's family branch
+    const isOpen = state.expanded.has(id);
+    const want = open == null ? !isOpen : open;
+    if (want === isOpen) return false;
+    if (want) state.expanded.add(id); else state.expanded.delete(id);
+    state.visible = computeVisible();
+    renderTree(id);                                        // redraw, keeping this card where it was on screen
+    if (state.panel === 'profile' && state.selected != null) renderProfile(state.selected);
+    return true;
+  }
+
+  function reveal(id) {                                    // Make sure a person is drawn, opening the branches that lead to them
+    if (state.visible.has(id)) return false;
+    for (let guard = 0; guard < 25 && !state.visible.has(id); guard++) {
+      const path = Kinship.connectionPath(fam, state.focus, id);
+      let opened = false;
+      if (path) {
+        for (let i = 1; i < path.nodes.length; i++) {      // first hidden person on the way: open the branch of the one before
+          if (!state.visible.has(path.nodes[i])) {
+            const s = path.nodes[i - 1];
+            if (!state.expanded.has(s)) { state.expanded.add(s); opened = true; }
+            break;
+          }
+        }
+      }
+      if (!opened) state.forced.add(id);                   // not connected (or nothing to open): show them anyway
+      state.visible = computeVisible();
+    }
+    return true;
+  }
+  function revealAll(ids) {                                // Reveal several people; redraw once if anything changed
+    let changed = false;
+    ids.forEach(function (id) { if (reveal(id)) changed = true; });
+    if (changed) renderTree(null);
+    return changed;
+  }
+
+  function cardClicked(id) {                               // A click on a card
+    if (!state.expanded.has(id) && hiddenBranch(id).length) toggleBranch(id, true); // a spouse: show their family
+    openProfile(id, { pan: false });
+  }
+
+  function drawExpanders() {                               // "Ver familia (2)" pill on spouses with a closed branch
+    cardEls.forEach(function (g, id) {
+      g.selectAll('.branch-badge').remove();
+      const open = state.expanded.has(id);
+      const hidden = open ? [] : hiddenBranch(id);
+      if (!open && !hidden.length) return;
+      const label = open ? tr('hideFamily') : tr('showFamily', { n: hidden.length });
+      const full = open ? tr('hideFamilyOf', { name: nameOf(id) }) : tr('showFamilyOf', { name: nameOf(id), n: hidden.length });
+      const b = g.append('g')
+        .attr('class', 'branch-badge' + (open ? ' open' : ''))
+        .attr('transform', 'translate(' + (CARD_W / 2) + ',0)') // centred on the top edge, where the family appears
+        .attr('role', 'button').attr('tabindex', 0).attr('aria-label', full);
+      b.append('title').text(full);
+      const pill = b.append('rect').attr('y', -13).attr('height', 26).attr('rx', 13);
+      const text = b.append('text').text(label);
+      const w = text.node().getComputedTextLength() + 26;   // size the pill to its words
+      pill.attr('x', -w / 2).attr('width', w);
+      b.on('click', function (e) { e.stopPropagation(); toggleBranch(id); });
+      b.on('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleBranch(id); } });
+    });
+  }
+
+  function renderTree(anchorId) {                          // Draw (or redraw) the tree for the people in state.visible
+    if (litUnion != null) clearHighlight();
+    let anchorScreen = null;                               // keep this person's card fixed on screen across the redraw
+    if (anchorId != null && layout.people.has(anchorId)) {
+      const t0 = d3.zoomTransform(svg.node()), p0 = layout.people.get(anchorId);
+      anchorScreen = { x: t0.applyX(p0.x), y: t0.applyY(p0.y) };
+    }
+    const before = new Set(layout.people.keys());          // who was drawn before, to fade in newcomers
+    [linkLayer, hitLayer, dotLayer, cardLayer].forEach(function (l) { l.selectAll('*').remove(); });
+    linkEls.clear(); cardEls.clear(); unionLines.clear(); unionDots.clear();
+    computeLayout();
+    drawLinks();
+    drawCards();
+    if (before.size) cardEls.forEach(function (g, id) { if (!before.has(id)) g.classed('revealed', true); });
+    updateCardLabels();
+    drawExpanders();
+    updateLineage();
+    updatePath();
+    selectCard(state.selected);                            // keep the blue ring on the open profile
+    if (anchorScreen && layout.people.has(anchorId)) {
+      const t = d3.zoomTransform(svg.node()), p = layout.people.get(anchorId);
+      svg.call(zoom.transform, d3.zoomIdentity.translate(anchorScreen.x - p.x * t.k, anchorScreen.y - p.y * t.k).scale(t.k));
+    }
+    updateSummaryChip();
   }
 
   /* ===================================================================
@@ -811,7 +957,10 @@
     }
     const words = q.split(/\s+/);
     return people
-      .filter(function (p) { const n = norm(nameOf(p.id)); return words.every(function (w) { return n.indexOf(w) !== -1; }); })
+      .filter(function (p) {                               // match the name or the nickname
+        const n = norm(nameOf(p.id) + ' ' + localized(p.nickname));
+        return words.every(function (w) { return n.indexOf(w) !== -1; });
+      })
       .sort(function (a, b) {                              // Names that start with the first word come first
         const sa = norm(nameOf(a.id)).indexOf(words[0]) === 0 ? 0 : 1;
         const sb = norm(nameOf(b.id)).indexOf(words[0]) === 0 ? 0 : 1;
@@ -909,6 +1058,7 @@
      12. PROFILE
      =================================================================== */
   function openProfile(id, opts) {
+    if (revealAll([id])) opts = { pan: true };             // they were in a closed branch: open it and go to them
     state.panel = 'profile';
     selectCard(id);
     renderProfile(id);
@@ -943,6 +1093,7 @@
 
       '<div><p class="profile-number">' + esc(tr('personNumber', { n: id })) + '</p>' +
       '<h2 class="profile-name' + (p.name ? '' : ' unknown') + '">' + esc(nameOf(id)) + '</h2>' +
+      (p.nickname ? '<p class="profile-nick">' + esc(tr('knownAs', { nick: localized(p.nickname) })) + '</p>' : '') + // "Le dicen Pajarita"
       (lifespan(p) ? '<p class="profile-life">' + esc(lifespan(p)) + '</p>' : '') + '</div></div>';
 
     // ---- Relationship to the focus person ----
@@ -955,8 +1106,15 @@
     }
 
     // ---- Buttons ----
+    let branchBtn = '';                                    // relatives by marriage: open or close their family branch
+    if (hasBranch(id)) {
+      const open = state.expanded.has(id);
+      branchBtn = '<button type="button" class="btn btn-violet btn-small" data-action="branch" data-id="' + id + '">' +
+        esc(open ? tr('hideFamilyOf', { name: givenName(nameOf(id)) }) : tr('showFamilyOf', { name: givenName(nameOf(id)), n: hiddenBranch(id).length })) + '</button>';
+    }
     h += '<div class="profile-actions">' +
       (isFocus ? '' : '<button type="button" class="btn btn-primary btn-small" data-action="focus" data-id="' + id + '" title="' + esc(tr('viewAsTitle')) + '">' + esc(tr('viewTreeAs')) + '</button>') +
+      branchBtn +
       '<button type="button" class="btn btn-ghost btn-small" data-action="compare" data-id="' + id + '">' + esc(tr('compareWith')) + '</button></div>';
 
     // ---- Short description and biography ----
@@ -970,6 +1128,10 @@
     if (p.died) facts.push([tr('died'), p.died]);
     if (p.birthplace) facts.push([tr('birthplace'), p.birthplace]);
     if (facts.length) h += '<dl class="facts">' + facts.map(function (f) { return '<dt>' + esc(f[0]) + '</dt><dd>' + esc(f[1]) + '</dd>'; }).join('') + '</dl>';
+
+    // ---- Family at a glance, from this person's point of view ----
+    const sumInfo = summaryFor(id);
+    h += '<h3>' + esc(tr('summaryInProfile')) + '</h3>' + summaryRowsHTML(sumInfo.sum, sumInfo.rels);
 
     // ---- Family ----
     h += '<h3>' + esc(tr('family')) + '</h3>';
@@ -1023,6 +1185,72 @@
   }
 
   /* ===================================================================
+     12b. FAMILY AT A GLANCE (relationship summaries)
+     Counts every recorded relative, including people in closed branches.
+     =================================================================== */
+  function relationsFrom(id) {                             // Everyone's relationship to this person
+    if (id === state.focus) return state.relations;
+    const m = new Map();
+    people.forEach(function (p) { m.set(p.id, decorate(Kinship.relation(fam, id, p.id))); });
+    return m;
+  }
+  function summaryFor(id) {
+    const rels = relationsFrom(id);
+    return { sum: Kinship.summaryOf(fam, id, function (pid) { return rels.get(pid); }), rels: rels };
+  }
+  function summaryRowsHTML(sum, rels) {                    // One row per group: name, count, and the people on tap
+    if (!sum.total) return '<p class="profile-empty">' + esc(tr('summaryNone')) + '</p>';
+    const totals = [];
+    if (sum.blood) totals.push(tr('summaryBlood', { n: sum.blood }));
+    if (sum.marriage) totals.push(tr('summaryMarriage', { n: sum.marriage }));
+    return '<p class="sum-totals">' + esc(totals.join(' · ')) + '</p><div class="sum-list">' + sum.groups.map(function (g) {
+      const items = g.ids.map(function (pid) {
+        return personChip(pid, I18N.cardLabel(state.lang, rels.get(pid), genderOf(pid)));
+      }).join('');
+      return '<details class="sum-row"><summary><span class="sum-label">' + esc(tr('sum_' + g.key)) + '</span>' +
+        (g.unconfirmed ? '<span class="sum-sub">' + esc(tr('summaryUnconfirmed', { n: g.unconfirmed })) + '</span>' : '') +
+        '<span class="sum-count">' + g.ids.length + '</span></summary><ul class="people-list">' + items + '</ul></details>';
+    }).join('') + '</div>';
+  }
+  function updateSummaryChip() {                           // The short summary under "Viendo el árbol como …"
+    const el = $('#summary-chip');
+    if (state.focus == null) { el.hidden = true; return; }
+    const sum = Kinship.summaryOf(fam, state.focus, function (pid) { return state.relations.get(pid); });
+    const preferred = ['auntsUncles', 'firstCousins', 'greatAuntsUncles']; // the groups asked for first
+    let chosen = sum.groups.filter(function (g) { return preferred.indexOf(g.key) !== -1; });
+    if (!chosen.length) chosen = sum.groups.slice(0, 3);   // nobody in those groups: show the first groups instead
+    const inChosen = chosen.reduce(function (n, g) { return n + g.ids.length; }, 0);
+    let h = '<span class="sum-title">' + esc(tr('summaryShort', { name: givenName(nameOf(state.focus)) })) + '</span>';
+    chosen.forEach(function (g, i) {
+      h += '<span class="sum-item' + (i > 0 ? ' extra' : '') + '">' + esc(tr('sum_' + g.key)) + ' <b>' + g.ids.length + '</b></span>';
+    });
+    if (sum.total - inChosen > 0) h += '<span class="sum-item extra">' + esc(tr('summaryOthers')) + ' <b>' + (sum.total - inChosen) + '</b></span>';
+    if (!sum.total) h += '<span class="sum-item">' + esc(tr('summaryNone')) + '</span>';
+    h += '<button type="button" class="mini" data-chip="summary">' + esc(tr('summarySeeAll')) + '</button>';
+    el.innerHTML = h;
+    el.hidden = false;
+  }
+  function openSummary() {                                 // The full summary of the focus person, in the side panel
+    state.panel = 'summary';
+    selectCard(null);
+    renderSummaryPanel();
+    showPanel();
+    panelBody.scrollTop = 0;
+    updateChips();
+  }
+  function renderSummaryPanel() {
+    const id = state.focus;
+    const info = summaryFor(id);
+    panelBody.innerHTML = '<div class="summary">' +
+      '<p class="profile-number">' + esc(tr('personNumber', { n: id })) + '</p>' +
+      '<h2 class="profile-name">' + esc(tr('summaryTitle', { name: nameOf(id) })) + '</h2>' +
+      '<p class="intro">' + esc(tr('summaryNote')) + '</p>' +
+      summaryRowsHTML(info.sum, info.rels) +
+      '<div class="profile-actions"><button type="button" class="btn btn-ghost btn-small" data-action="open" data-id="' + id + '">' + esc(tr('openProfileBtn')) + '</button></div>' +
+      '</div>';
+  }
+
+  /* ===================================================================
      13. COMPARE TWO PEOPLE
      =================================================================== */
   function openCompare(a, b) {
@@ -1031,6 +1259,7 @@
     state.picking = state.compareA == null ? 'a' : (state.compareB == null ? 'b' : null);
     state.panel = 'compare';
     selectCard(null);
+    revealCompared();
     renderCompare();
     showPanel();
     panelBody.scrollTop = 0;
@@ -1154,6 +1383,7 @@
       case 'close': closePanel(); break;                   // The × button
       case 'open': openProfile(id, { pan: true }); break;  // Click on a relative
       case 'focus': setFocus(id); break;                   // "View the tree as this person"
+      case 'branch': toggleBranch(id); break;              // "Ver / Ocultar la familia de …"
       case 'compare': openCompare(id, id === state.focus ? null : state.focus); break; // "Compare with…"
       case 'change':                                       // Pick a different person for A or B
         state.picking = btn.dataset.slot;
@@ -1161,6 +1391,7 @@
       case 'pick':                                         // A person was chosen in the compare search
         if (btn.dataset.slot === 'a') state.compareA = id; else state.compareB = id;
         state.picking = state.compareA == null ? 'a' : (state.compareB == null ? 'b' : null);
+        revealCompared();
         renderCompare(); updatePath(); updateChips(); focusPicker(); break;
       case 'swap': {                                       // Swap A and B
         const t = state.compareA; state.compareA = state.compareB; state.compareB = t;
@@ -1173,6 +1404,16 @@
       case 'clear-compare': clearCompare(); break;
     }
   });
+
+  function revealCompared() {                              // Show both compared people and everyone on the path between them
+    const a = state.compareA, b = state.compareB;
+    const ids = [a, b].filter(function (x) { return x != null; });
+    if (a != null && b != null && a !== b) {
+      const path = Kinship.connectionPath(fam, a, b);
+      if (path) path.nodes.forEach(function (n) { if (ids.indexOf(n) === -1) ids.push(n); });
+    }
+    revealAll(ids);
+  }
 
   function clearCompare() {
     state.compareA = state.compareB = null;
@@ -1205,6 +1446,7 @@
     const btn = e.target.closest('[data-chip]');
     if (!btn) return;
     if (btn.dataset.chip === 'back') setFocus(defaultFocus);
+    if (btn.dataset.chip === 'summary') openSummary();
     if (btn.dataset.chip === 'open-compare') openCompare(state.compareA, state.compareB);
     if (btn.dataset.chip === 'clear-compare') clearCompare();
   });
@@ -1227,9 +1469,12 @@
       state.relations.forEach(decorate);                   // refresh names used inside labels
       updateCardMeta();
       updateCardLabels();
+      drawExpanders();
       updateChips();
+      updateSummaryChip();
       if (state.panel === 'profile') renderProfile(state.selected);
       if (state.panel === 'compare') renderCompare();
+      if (state.panel === 'summary') renderSummaryPanel();
       if (!resultsEl.hidden) renderResults();
       renderProblems();
     }
@@ -1279,7 +1524,7 @@
      =================================================================== */
   $('#zoom-in').addEventListener('click', function () { svg.transition().duration(300).call(zoom.scaleBy, 1.3); });
   $('#zoom-out').addEventListener('click', function () { svg.transition().duration(300).call(zoom.scaleBy, 1 / 1.3); });
-  $('#zoom-fit').addEventListener('click', function () { fitPeople(people.map(function (p) { return p.id; })); });
+  $('#zoom-fit').addEventListener('click', function () { fitPeople(Array.from(state.visible)); });
   $('#zoom-center').addEventListener('click', function () { showNeighborhood(state.focus); });
   $('#compare-open').addEventListener('click', function () {
     if (state.compareA != null && state.compareB != null) openCompare(state.compareA, state.compareB);
@@ -1305,9 +1550,6 @@
     applyLanguage();
     renderProblems();
     if (!people.length) return;                            // Nothing to draw yet
-    computeLayout();
-    drawLinks();
-    drawCards();
     const startFocus = readHash() || defaultFocus;
     setFocus(startFocus, { duration: 0 });                 // Label everyone and jump (no animation) to the focus person
   }

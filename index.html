@@ -68,6 +68,7 @@
 
     <div class="chips">                                       <!-- Floating notes at the top of the tree -->
       <div id="focus-chip" class="chip focus-chip"></div>     <!-- "Viewing the tree as …" -->
+      <div id="summary-chip" class="chip summary-chip" hidden></div> <!-- Short family summary of the focus person -->
       <div id="compare-chip" class="chip compare-chip" hidden></div> <!-- "Comparing A ↔ B" -->
     </div>
 
@@ -87,6 +88,7 @@
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-path" d="M2 5h36"></path></svg><span data-i18n="legendPath"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCouple"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot apart" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCoparents"></span></li>
+        <li><span class="lg-pill">+</span><span data-i18n="legendBranch"></span></li> <!-- "Ver familia" pill on relatives by marriage -->
       </ul>
       <p class="legend-hint" data-i18n="legendHover"></p>      <!-- "Hover over a line to see who it connects" -->
     </details>

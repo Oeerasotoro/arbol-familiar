@@ -204,7 +204,7 @@ svg { display: block; }
 .end-badge text { fill: #fff; font: 700 12px var(--font-ui); text-anchor: middle; dominant-baseline: central; }
 
 /* ---------- 7. Floating chips ---------- */
-.chips { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; z-index: 5; }
+.chips { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; z-index: 5; }
 .chip {
   pointer-events: auto;
   display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -282,6 +282,7 @@ svg { display: block; }
 .profile-name { margin: 2px 0 4px; font-family: var(--font-display); font-weight: 600; font-size: 25px; line-height: 1.15; letter-spacing: -0.01em; }
 .profile-name.unknown { font-style: italic; color: var(--muted); }
 .profile-life { margin: 0; font-size: 14px; color: var(--ink-2); }
+.profile-nick { margin: 0 0 2px; font-size: 14px; color: var(--ink-2); font-style: italic; }
 .profile-rel { margin: 18px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); }
 .profile-rel.rel-affinity, .profile-rel.rel-partner { background: #ece8f4; }
 .profile-rel.rel-none { background: var(--surface-2); }
@@ -372,4 +373,40 @@ svg { display: block; }
   .result { flex-wrap: wrap; }                                  /* buttons drop under the name on phones */
   .result-main { flex-basis: calc(100% - 50px); }
   .result-actions { margin-left: 44px; }
+}
+
+/* ---------- 12. Family summaries and relatives-by-marriage branches ---------- */
+.summary-chip { gap: 6px 14px; padding: 6px 8px 6px 14px; font-size: 13px; }
+.summary-chip .sum-title { font-weight: 700; color: var(--ink); }
+.summary-chip .sum-item { white-space: nowrap; color: var(--ink-2); }
+.summary-chip .sum-item b { color: var(--accent-ink); font-weight: 700; margin-left: 2px; }
+.btn-violet { background: var(--marriage); color: #fff; }        /* "Ver la familia de …" */
+.btn-violet:hover { filter: brightness(0.92); }
+.branch-badge { cursor: pointer; }                               /* pill on the top edge of a spouse's card */
+.branch-badge rect { fill: var(--marriage); stroke: #fff; stroke-width: 2; }
+.branch-badge text { fill: #fff; font: 700 12.5px var(--font-ui); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.branch-badge.open rect { fill: var(--surface); stroke: var(--marriage); stroke-width: 1.5; }
+.branch-badge.open text { fill: var(--marriage); }
+.branch-badge:hover rect { filter: brightness(1.1); }
+.branch-badge:focus { outline: none; }
+.branch-badge:focus-visible rect { stroke: var(--path); stroke-width: 3; }
+.card.revealed { animation: card-in .45s ease-out; }             /* newly shown relatives fade in */
+@keyframes card-in { from { opacity: 0; } }
+.lg-pill { width: 40px; height: 16px; flex: none; border-radius: 8px; background: var(--marriage); color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.summary h2 { margin-right: 40px; }
+.summary .intro { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); }
+.sum-totals { margin: 2px 0 10px; font-size: 13.5px; color: var(--ink-2); }
+.sum-list { display: grid; gap: 5px; }
+.sum-row { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.sum-row > summary { display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; list-style: none; }
+.sum-row > summary::-webkit-details-marker { display: none; }
+.sum-row > summary::before { content: "▸"; color: var(--muted); font-size: 11px; width: 10px; }
+.sum-row[open] > summary::before { content: "▾"; }
+.sum-row > summary:hover { background: var(--surface-2); border-radius: 12px; }
+.sum-label { flex: 1; font-size: 14.5px; font-weight: 600; }
+.sum-sub { font-size: 12px; color: var(--muted); }
+.sum-count { min-width: 32px; text-align: center; font-weight: 700; font-size: 14px; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; }
+.sum-row .people-list { padding: 0 10px 10px; }
+@media (max-width: 760px) {
+  .summary-chip .sum-item.extra { display: none; }               /* phones: title, first group and the button */
 }

@@ -38,6 +38,7 @@
       byId.set(raw.id, {                               // Store a cleaned-up copy of the person
         id: raw.id,
         name: (raw.name || '').trim(),                 // Remove stray spaces around the name
+        nickname: raw.nickname || '',                  // What the family calls them (text or {es, en})
         gender: raw.gender === 'male' || raw.gender === 'female' ? raw.gender : 'unknown',
         father: raw.father == null ? null : raw.father,
         mother: raw.mother == null ? null : raw.mother,
@@ -439,6 +440,105 @@
     return pairs;
   }
 
+  /* ---------------------------------------------------------------
+     bloodOf(fam, id)
+     Everyone who shares at least one recorded ancestor with this person
+     (ancestors, descendants, siblings, cousins…), including the person.
+     --------------------------------------------------------------- */
+  function bloodOf(fam, id) {
+    if (!fam._bloodCache) fam._bloodCache = new Map();
+    if (fam._bloodCache.has(id)) return fam._bloodCache.get(id);
+    const mine = ancestorsOf(fam, id);                 // this person and all their ancestors
+    const out = new Set();
+    fam.byId.forEach(function (p) {
+      const theirs = ancestorsOf(fam, p.id);
+      for (const a of theirs.keys()) { if (mine.has(a)) { out.add(p.id); break; } }
+    });
+    fam._bloodCache.set(id, out);
+    return out;
+  }
+
+  /* ---------------------------------------------------------------
+     familyCore(fam, id)
+     The "family view" of a person: their blood relatives plus the
+     partners and co-parents of those relatives (spouses shown where they
+     connect). The spouses' own parents and siblings are not included:
+     they belong to the spouse's branch.
+     --------------------------------------------------------------- */
+  function familyCore(fam, id) {
+    if (!fam._coreCache) fam._coreCache = new Map();
+    if (fam._coreCache.has(id)) return fam._coreCache.get(id);
+    const blood = bloodOf(fam, id);
+    const out = new Set(blood);
+    blood.forEach(function (b) {
+      fam.partners.get(b).forEach(function (q) { out.add(q); });
+      fam.coparents.get(b).forEach(function (q) { out.add(q); });
+    });
+    fam._coreCache.set(id, out);
+    return out;
+  }
+
+  /* ---------------------------------------------------------------
+     Relationship summary: which group each relative falls into.
+     The order below is the order the groups are listed on the page.
+     --------------------------------------------------------------- */
+  const SUMMARY_ORDER = [
+    'parents', 'siblings', 'children', 'grandparents', 'grandchildren',
+    'auntsUncles', 'nephews', 'firstCousins', 'greatAuntsUncles', 'grandNephews',
+    'greatGrandparents', 'greatGrandchildren', 'parentsCousins', 'cousinsChildren',
+    'secondCousins', 'olderAncestors', 'otherBlood',
+    'partners', 'coparents', 'inLaws',
+  ];
+  const BY_MARRIAGE = ['partners', 'coparents', 'inLaws'];
+
+  function categoryOf(rel) {                           // rel comes from relation(); returns a group name or null
+    if (rel.type === 'partner') return 'partners';
+    if (rel.type === 'coparent') return 'coparents';
+    if (rel.type === 'affinity') return 'inLaws';
+    if (rel.type !== 'blood') return null;             // self, or not related
+    const dx = rel.dx, dy = rel.dy;
+    if (dy === 0) return dx === 1 ? 'parents' : dx === 2 ? 'grandparents' : dx === 3 ? 'greatGrandparents' : 'olderAncestors';
+    if (dx === 0) return dy === 1 ? 'children' : dy === 2 ? 'grandchildren' : 'greatGrandchildren';
+    if (dx === 1 && dy === 1) return 'siblings';
+    if (dx === 2 && dy === 1) return 'auntsUncles';
+    if (dx === 3 && dy === 1) return 'greatAuntsUncles';
+    if (dx === 1 && dy === 2) return 'nephews';
+    if (dx === 1 && dy === 3) return 'grandNephews';
+    if (dx === 2 && dy === 2) return 'firstCousins';
+    if (dx === 3 && dy === 2) return 'parentsCousins';
+    if (dx === 2 && dy === 3) return 'cousinsChildren';
+    if (dx === 3 && dy === 3) return 'secondCousins';
+    return 'otherBlood';
+  }
+
+  /* ---------------------------------------------------------------
+     summaryOf(fam, id, relOf)
+     Counts every recorded relative of a person by group.
+     relOf(otherId) may supply relations already worked out.
+     --------------------------------------------------------------- */
+  function summaryOf(fam, id, relOf) {
+    const groups = new Map();                          // group name -> [{id, rel}]
+    let blood = 0, marriage = 0;
+    fam.byId.forEach(function (p) {
+      if (p.id === id) return;
+      const rel = relOf ? relOf(p.id) : relation(fam, id, p.id);
+      const cat = categoryOf(rel);
+      if (!cat) return;
+      if (!groups.has(cat)) groups.set(cat, []);
+      groups.get(cat).push({ id: p.id, rel: rel });
+      if (BY_MARRIAGE.indexOf(cat) === -1) blood++; else marriage++;
+    });
+    const list = SUMMARY_ORDER.filter(function (k) { return groups.has(k); }).map(function (k) {
+      const members = groups.get(k);
+      return {
+        key: k,
+        ids: members.map(function (m) { return m.id; }),
+        unconfirmed: members.filter(function (m) { return m.rel.confirmed === false; }).length,
+      };
+    });
+    return { groups: list, blood: blood, marriage: marriage, total: blood + marriage };
+  }
+
   const api = {                                        // What other files can use
     buildFamily: buildFamily,
     ancestorsOf: ancestorsOf,
@@ -449,6 +549,11 @@
     connectionPath: connectionPath,
     describeChain: describeChain,
     lineage: lineage,
+    bloodOf: bloodOf,
+    familyCore: familyCore,
+    categoryOf: categoryOf,
+    summaryOf: summaryOf,
+    SUMMARY_ORDER: SUMMARY_ORDER,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; // for automated tests
   else root.Kinship = api;                             // in the browser: available as window.Kinship

@@ -103,6 +103,13 @@ Text goes between straight double quotes. If the text itself contains a double q
 - **The page is blank:** usually a missing comma or quote in `family-data.js`. Check the block you edited last; every block ends with `},`.
 - **A photo does not show:** check that the file name in `photo:` matches the file exactly, including capital letters and the extension.
 
+## What visitors see
+
+- **Family view.** The tree shows the blood family of the person it is centred on, plus the partners who connect to that family. A partner's own relatives (parents, siblings…) stay hidden behind a purple **Ver familia** pill on the partner's card; clicking the card or the pill shows them, and **Ocultar familia** hides them again. Making anyone the focus starts again from that person's family, with every branch closed.
+- **Family at a glance.** Under "Viendo el árbol como …" a short summary counts the focus person's aunts and uncles, first cousins, great-aunts and great-uncles and other relatives; **Ver resumen** opens the full list. Every profile has the same summary from that person's point of view. Counts include everyone recorded, also people in closed branches.
+
+Nothing needs to be set up for this: it is worked out from `father`, `mother`, `partners` and `notPartners` in `family-data.js`.
+
 ## How relationships are calculated
 
 - Labels on the cards always describe each person's relationship to the person the tree is centred on ("Viewing the tree as …").
