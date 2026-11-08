@@ -2,7 +2,7 @@
    I18N.JS — every word the website shows, in Spanish and English
    ---------------------------------------------------------------------
    To change a button label or message, edit the text in UI below.
-   The relationship names (tío, prima segunda, half-brother...) are
+   The relationship names (tío, prima segunda, sister...) are
    built by the functions further down from the numbers produced by
    js/kinship.js.
    ===================================================================== */
@@ -49,6 +49,8 @@
       degree: 'Grado de parentesco',
       civilNote: 'Cómputo civil, como en la ley colombiana.',
       sharedAncestors: 'Ancestros en común',
+      sharedParents: 'Padre o madre en común',
+      sharedBothParents: 'Padres en común',
       dna: 'ADN compartido esperado',
       dnaNote: 'Es un promedio; la cantidad real varía entre parientes.',
       howConnect: 'Cómo se conectan',
@@ -135,6 +137,8 @@
       degree: 'Degree of kinship',
       civilNote: 'Civil-law count, as used in Colombian law.',
       sharedAncestors: 'Shared ancestors',
+      sharedParents: 'Shared parent',
+      sharedBothParents: 'Shared parents',
       dna: 'Expected shared DNA',
       dnaNote: 'This is an average; the real amount varies between relatives.',
       howConnect: 'How they connect',
@@ -249,7 +253,8 @@
       else if (removed > 2) s += ' ' + removed + ' times removed';
       t3 = [s, s, s];
     }
-    if (half) t3 = map3(t3, function (s) { return s ? 'Half-' + lower(s) : s; });
+    // Siblings who share only one parent are still called brother/sister, uncle, cousin…;
+    // the profile and the comparison say which parent they share.
     if (neutralFromPair) t3[2] = t3[1] + ' or ' + lower(t3[0]);
     return t3;
   }
@@ -265,7 +270,7 @@
     } else if (dx === 0) {                             // descendant
       pair = DESC[dy] || ['Descendiente (' + dy + ' generaciones)', 'Descendiente (' + dy + ' generaciones)'];
     } else if (dx === 1 && dy === 1) {                 // siblings
-      return half ? ['Medio hermano', 'Media hermana'] : ['Hermano', 'Hermana'];
+      return ['Hermano', 'Hermana'];                   // also when they share only one parent
     } else if (dx > dy) {                              // tío line: older generation than the viewer
       const level = dx - dy - 1;                       // 0 tío, 1 tío abuelo, 2 tío bisabuelo...
       pair = (TIO[level] || ['Tío (' + (level + 1) + ' generaciones arriba)', 'Tía (' + (level + 1) + ' generaciones arriba)']).slice();
@@ -276,10 +281,10 @@
       if (dx >= 2) pair = [pair[0] + ' ' + ES_ORD_M[dx], pair[1] + ' ' + ES_ORD_F[dx]]; // sobrino segundo
     } else {                                           // same generation: cousins
       const n = dx;                                    // 2 = primo hermano, 3 = primo segundo...
-      if (n === 2) pair = half ? ['Primo', 'Prima'] : ['Primo hermano', 'Prima hermana'];
+      if (n === 2) pair = ['Primo hermano', 'Prima hermana'];
       else pair = ['Primo ' + (ES_ORD_M[n - 1] || (n - 1) + '.º'), 'Prima ' + (ES_ORD_F[n - 1] || (n - 1) + '.ª')];
     }
-    if (half && !(dy === 0 || dx === 0)) pair = ['Medio ' + lower(pair[0]), 'Media ' + lower(pair[1])];
+    // No "medio/media" prefix: shared-parent details appear in profiles and comparisons.
     return pair;
   }
 
@@ -401,7 +406,7 @@
   function dnaText(lang, rel, r) {
     if (rel.type !== 'blood' || r <= 0) return lang === 'es' ? 'Ninguno, según los ancestros registrados' : 'None, based on the recorded ancestors';
     let s;
-    if (rel.kind === 'unknown') {                      // full or half unknown: the true value is between r and 2r
+    if (rel.kind === 'unknown') {                      // not known if both parents are shared: the true value is between r and 2r
       s = lang === 'es' ? 'Entre ' + pct(lang, r) + ' y ' + pct(lang, 2 * r) : 'Between ' + pct(lang, r) + ' and ' + pct(lang, 2 * r);
     } else {
       s = lang === 'es' ? 'Alrededor del ' + pct(lang, r) : 'About ' + pct(lang, r);
@@ -411,21 +416,21 @@
   }
 
   /* ---------------------------------------------------------------
-     siblingText — used in profiles: "Media hermana · misma madre: Ana"
+     siblingText — used in profiles: "Hermana · misma madre: Ana"
      --------------------------------------------------------------- */
   function siblingText(lang, info, gender, sharedParent) {
     const i = g(gender);
     const word = lang === 'es' ? esTriple(['Hermano', 'Hermana'])[i] : ['Brother', 'Sister', 'Sibling'][i];
     if (!info.confirmed) return word + ' · ' + t(lang, 'unconfirmed');
-    if (info.kind === 'full') return lang === 'es' ? word + ' de padre y madre' : 'Full ' + lower(word);
-    if (info.kind === 'half') {
-      const halfWord = lang === 'es' ? esTriple(['Medio hermano', 'Media hermana'])[i] : ['Half-brother', 'Half-sister', 'Half-sibling'][i];
+    if (info.kind === 'full') return word + (lang === 'es' ? ' · mismo padre y misma madre' : ' · same father and mother');
+    if (info.kind === 'half') {                        // share one parent: still "Hermana", plus which parent
+      const halfWord = word;
       if (!sharedParent) return halfWord;
       const viaFather = sharedParent.role === 'father';
       const via = lang === 'es' ? (viaFather ? 'mismo padre: ' : 'misma madre: ') : (viaFather ? 'same father: ' : 'same mother: ');
       return halfWord + ' · ' + via + sharedParent.name;
     }
-    return word + ' · ' + (lang === 'es' ? 'no se sabe si de padre y madre' : 'full or half not known');
+    return word + ' · ' + (lang === 'es' ? 'no se sabe si comparten ambos padres' : 'not known if they share both parents');
   }
 
   /* ---------------------------------------------------------------
@@ -440,10 +445,7 @@
       else if (step.rel === 'parent') w = lang === 'es' ? esTriple(['Padre', 'Madre'])[i] : ['Father', 'Mother', 'Parent'][i];
       else if (step.rel === 'partner') w = lang === 'es' ? 'Pareja' : 'Partner';
       else {                                           // sibling
-        const half = step.info && step.info.kind === 'half';
-        w = lang === 'es'
-          ? esTriple(half ? ['Medio hermano', 'Media hermana'] : ['Hermano', 'Hermana'])[i]
-          : (half ? ['Half-brother', 'Half-sister', 'Half-sibling'] : ['Brother', 'Sister', 'Sibling'])[i];
+        w = lang === 'es' ? esTriple(['Hermano', 'Hermana'])[i] : ['Brother', 'Sister', 'Sibling'][i];
       }
       w = lower(w);
       if (step.info && step.info.confirmed === false) w += ' (' + t(lang, 'unconfirmed') + ')';

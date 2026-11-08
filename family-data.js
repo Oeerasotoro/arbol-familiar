@@ -193,7 +193,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // unconfirmed. When you confirm them, change
   //     unconfirmed: ["father", "mother"]
   // to  unconfirmed: []
-  // If one of them is a half-sibling, change the father or mother
+  // If one of them shares only one parent with him, change the father or mother
   // number to the right person (or to null if unknown).
   {
     id: 8,
@@ -442,7 +442,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // Her siblings share her first surname, Riascos, which comes from the
   // father, so they are linked through an unnamed father (#23). Their
   // mothers are not recorded, so the site shows them as siblings without
-  // saying whether they are full or half siblings. If you learn they share
+  // saying whether they share both parents. If you learn they share
   // the same mother, add her as a new person and put her number in
   // "mother" for María del Carmen and each sibling.
   {
@@ -527,7 +527,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
-  // ===================== OSCAR'S HALF-SIBLINGS =====================
+  // ===================== OSCAR'S SIBLINGS (SAME FATHER OR SAME MOTHER) =====================
   // Same father as Oscar (José Ernesto, #2), different mothers.
   // Andrea and Viviana share a second surname (Eraso), and Luis Miguel and
   // María Fernanda share theirs (Melodelgado), so each pair is recorded with
@@ -641,7 +641,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
-  // ===================== OTHER PARENTS OF THE HALF-SIBLINGS =====================
+  // ===================== OTHER PARENTS OF OSCAR'S SIBLINGS =====================
   // #37 (Evelyn's mother) and #39 (Diego Fernando's father) have no name yet;
   // the site shows them as "Madre de Evelyn" and "Padre de Diego" until you
   // fill in "name". None of these parents are recorded as couples

@@ -983,11 +983,11 @@
     const partnerIds = Array.from(fam.partners.get(id));
     if (partnerIds.length) h += '<h4>' + esc(tr('partners')) + '</h4><ul class="people-list">' + partnerIds.map(function (q) { return personChip(q, ''); }).join('') + '</ul>';
 
-    const siblings = siblingsOf(id);                       // Full siblings first, then half, then unknown
+    const siblings = siblingsOf(id);                       // Siblings with both parents shared first, then one parent, then unknown
     if (siblings.length) {
       h += '<h4>' + esc(tr('siblings')) + '</h4><ul class="people-list">' + siblings.map(function (s) {
         let shared = null;
-        if (s.info.kind === 'half') {                      // Name the parent the half-siblings share
+        if (s.info.kind === 'half') {                      // Name the one parent these siblings share
           const link = fam.parentLinks.get(id).find(function (l) { return l.id === s.info.shared[0]; });
           shared = { role: link ? link.role : null, name: nameOf(s.info.shared[0]) };
         }
@@ -1089,7 +1089,9 @@
           h += '<div><dt>' + esc(tr('degree')) + '</dt><dd>' + esc(I18N.degreeText(state.lang, relAtoB)) +
             (relAtoB.degree ? '<small>' + esc(tr('civilNote')) + '</small>' : '') + '</dd></div>';
           if (relAtoB.type === 'blood' && relAtoB.dx > 0 && relAtoB.dy > 0) {
-            h += '<div><dt>' + esc(tr('sharedAncestors')) + '</dt><dd>' + relAtoB.shared.map(function (s) {
+            const siblingsPair = relAtoB.dx === 1 && relAtoB.dy === 1; // for siblings, say which parent(s) they share
+            const label = !siblingsPair ? 'sharedAncestors' : relAtoB.shared.length === 2 ? 'sharedBothParents' : 'sharedParents';
+            h += '<div><dt>' + esc(tr(label)) + '</dt><dd>' + relAtoB.shared.map(function (s) {
               return '<button type="button" class="mini" data-action="open" data-id="' + s + '">' + esc(nameOf(s)) + ' #' + s + '</button>';
             }).join(' ') + '</dd></div>';
           }
@@ -1099,8 +1101,8 @@
           h += '</dl>';
         }
         // ---- How they connect ----
-        if (path && path.steps.length > 1) {
-          const chain = Kinship.describeChain(fam, path);
+        const chain = path ? Kinship.describeChain(fam, path) : [];
+        if (chain.length > 1) {                            // a single step would only repeat the sentence above
           h += '<h3>' + esc(tr('howConnect')) + '</h3><p class="chain">' + sentenceHTML(I18N.chainSentence(state.lang, chain, nameOf, genderOf)) + '</p>';
         }
         if (path) {
