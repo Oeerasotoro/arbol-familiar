@@ -23,6 +23,8 @@
   --path: #22708f;          /* blue: path between two compared people */
   --path-soft: #dcecf2;     /* pale blue */
   --marriage: #6b5f8f;      /* violet: relatives by marriage */
+  --glow: #d27a00;          /* amber: a family lit up by the mouse */
+  --glow-soft: rgba(255, 170, 40, 0.34); /* soft halo around lit lines */
   --danger: #a8322a;        /* data warnings */
   --shadow: 0 12px 32px rgba(58, 38, 18, 0.14); /* soft shadow under panels */
   --radius: 14px;           /* roundness of corners */
@@ -146,6 +148,31 @@ svg { display: block; }
 .link.unconfirmed { stroke-dasharray: 5 5; }                    /* dashed = not confirmed */
 .link.lineage { stroke: var(--accent); stroke-width: 2.6; }     /* the focus person's direct line */
 .link.on-path { stroke: var(--path); stroke-width: 3.6; }       /* path between compared people */
+.link { pointer-events: none; }                                 /* the wide hit lines below catch the mouse instead */
+.link-hit {                                                     /* invisible, wide, easy to point at */
+  fill: none; stroke: transparent; stroke-width: 16px; stroke-linecap: round; stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;                            /* same width at any zoom */
+  pointer-events: stroke; cursor: pointer;
+}
+.link-hit.hl { stroke: var(--glow-soft); stroke-width: 11px; }  /* the glow */
+.link.hl { stroke: var(--glow); stroke-width: 3.2; opacity: 1; }
+#tree.lighting .link:not(.hl) { opacity: 0.28; }                /* fade the other lines */
+#tree.lighting .card:not(.hl) { opacity: 0.5; }                 /* and the other people */
+#tree.lighting .union-dot:not(.hl) { opacity: 0.3; }
+#tree .card.hl .card-bg { stroke: var(--glow); stroke-width: 2.6; } /* wins over focus and path outlines */
+.union-dot { pointer-events: none; }
+.union-dot.hl { fill: var(--glow); stroke: #fff; stroke-width: 2; }
+.union-dot.apart.hl { fill: #fff; stroke: var(--glow); stroke-width: 2.4; }
+.link-tip {                                                     /* label next to the pointer */
+  position: fixed; z-index: 60; pointer-events: none;
+  max-width: 300px; padding: 9px 12px; border-radius: 12px;
+  background: var(--ink); color: var(--surface);
+  font-size: 13px; line-height: 1.4; box-shadow: 0 8px 24px rgba(30, 20, 10, 0.25);
+}
+.link-tip b { font-weight: 700; }
+.link-tip .tip-sub { display: block; font-size: 12px; opacity: 0.75; }
+.link-tip .tip-kids { display: block; margin-top: 4px; }
+.legend-hint { margin: 0; padding: 0 14px 12px; font-size: 12px; color: var(--muted); max-width: 290px; }
 .union-dot { fill: var(--line); stroke: var(--bg); stroke-width: 1.5; }
 .union-dot.apart { fill: var(--bg); stroke: var(--line-strong, #9f8d74); stroke-width: 2; } /* hollow = parents who are not a couple */
 .card.rel-coparent .card-rel { fill: var(--marriage); }

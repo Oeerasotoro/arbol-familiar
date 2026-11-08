@@ -59,6 +59,7 @@
         <clipPath id="avatar-clip" clipPathUnits="objectBoundingBox"><circle cx="0.5" cy="0.5" r="0.5"></circle></clipPath> <!-- Makes photos round -->
       </defs>
       <g id="viewport">                                       <!-- Moved and scaled when you drag or zoom -->
+        <g id="link-hits"></g>                                <!-- Wide invisible lines that react to the mouse and glow -->
         <g id="links"></g>                                    <!-- Lines between relatives -->
         <g id="dots"></g>                                     <!-- Dots where a couple's lines meet -->
         <g id="cards"></g>                                    <!-- One card per person -->
@@ -87,9 +88,11 @@
         <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCouple"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot apart" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCoparents"></span></li>
       </ul>
+      <p class="legend-hint" data-i18n="legendHover"></p>      <!-- "Hover over a line to see who it connects" -->
     </details>
 
     <div id="problems" class="problems" hidden></div>          <!-- Only appears if family-data.js has a mistake -->
+    <div id="link-tip" class="link-tip" role="status" hidden></div> <!-- Label shown when a line is lit: who it connects -->
   </main>
 
   <!-- ===================== SIDE PANEL: profiles and comparisons ===================== -->

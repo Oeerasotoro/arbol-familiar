@@ -385,6 +385,9 @@
   const viewport = d3.select('#viewport');                 // Group that moves when you pan or zoom
   const linkLayer = d3.select('#links');
   const dotLayer = d3.select('#dots');                     // Couple markers, drawn above the lines
+  const hitLayer = d3.select('#link-hits');                // Invisible wide lines that react to the mouse
+  const unionLines = new Map();                            // family (union) key -> its visible lines and hit lines
+  const unionDots = new Map();                             // family (union) key -> its couple dot
   const cardLayer = d3.select('#cards');
   const linkEls = new Map();                               // line id -> line element, to colour lines later
   const cardEls = new Map();                               // person number -> card element
@@ -425,31 +428,103 @@
         u.parents.forEach(function (pid) {
           const pp = layout.people.get(pid);
           const allUnconfirmed = kids.length > 0 && kids.every(function (k) { return !linkConfirmed(k.id, pid); });
-          addLink('ps:' + pid + ':' + u.key, [[pp.x, pp.y + CARD_H / 2], [pp.x, up.y], [up.x, up.y]], allUnconfirmed);
+          addLink('ps:' + pid + ':' + u.key, [[pp.x, pp.y + CARD_H / 2], [pp.x, up.y], [up.x, up.y]], allUnconfirmed, u.key);
         });
       } else if (up.couple) {                              // Couple side by side: a line from each partner's card to the meeting point
         u.parents.forEach(function (pid) {
           const pp = layout.people.get(pid);
           const edgeX = pp.x < up.x ? pp.x + CARD_W / 2 : pp.x - CARD_W / 2; // Side of the card that faces the partner
           const allUnconfirmed = kids.length > 0 && kids.every(function (k) { return !linkConfirmed(k.id, pid); });
-          addLink('ps:' + pid + ':' + u.key, [[edgeX, pp.y], [up.x, pp.y], [up.x, up.y]], allUnconfirmed);
+          addLink('ps:' + pid + ':' + u.key, [[edgeX, pp.y], [up.x, pp.y], [up.x, up.y]], allUnconfirmed, u.key);
         });
       }
       kids.forEach(function (k) {                          // Meeting point down to each child's card
         const unconfirmed = u.parents.some(function (pid) { return !linkConfirmed(k.id, pid); });
-        addLink('cs:' + u.key + ':' + k.id, [[up.x, up.y], [up.x, busY], [k.pos.x, busY], [k.pos.x, k.pos.y - CARD_H / 2]], unconfirmed);
+        addLink('cs:' + u.key + ':' + k.id, [[up.x, up.y], [up.x, busY], [k.pos.x, busY], [k.pos.x, k.pos.y - CARD_H / 2]], unconfirmed, u.key);
       });
       if (up.couple) {                                     // Dot marking the couple: filled = together, hollow = not a couple
         const together = fam.partners.get(u.parents[0]).has(u.parents[1]);
-        dotLayer.append('circle').attr('class', 'union-dot' + (together ? '' : ' apart')).attr('cx', up.x).attr('cy', up.y).attr('r', 4);
+        const dot = dotLayer.append('circle').attr('class', 'union-dot' + (together ? '' : ' apart')).attr('cx', up.x).attr('cy', up.y).attr('r', 4);
+        unionDots.set(u.key, dot);                         // remembered so it can glow with its lines
       }
     });
   }
-  function addLink(id, points, unconfirmed) {
-    const el = linkLayer.append('path')
+  function addLink(id, points, unconfirmed, unionKey) {
+    const d = roundedPath(points, 10);
+    const el = linkLayer.append('path')                    // The visible line
       .attr('class', 'link' + (unconfirmed ? ' unconfirmed' : ''))
-      .attr('d', roundedPath(points, 10));
+      .attr('d', d);
     linkEls.set(id, el);
+    const hit = hitLayer.append('path')                    // A wide invisible copy underneath that catches the mouse
+      .attr('class', 'link-hit')                           // and shows the soft glow while highlighted
+      .attr('d', d);
+    if (!unionLines.has(unionKey)) unionLines.set(unionKey, { lines: [], hits: [] });
+    unionLines.get(unionKey).lines.push(el);
+    unionLines.get(unionKey).hits.push(hit);
+    hit.on('mouseenter', function (e) { if (pinnedUnion == null) highlightUnion(unionKey, e); })
+       .on('mousemove', function (e) { if (pinnedUnion == null) placeTip(e); })
+       .on('mouseleave', function () { if (pinnedUnion == null) clearHighlight(); })
+       .on('click', function (e) {                         // A click or tap keeps it lit (handy on phones)
+         e.stopPropagation();
+         if (pinnedUnion === unionKey) { clearHighlight(); return; }
+         highlightUnion(unionKey, e);
+         pinnedUnion = unionKey;
+       });
+  }
+
+  /* ---------- Glow: light up one family (parents, their lines, their children) ---------- */
+  let pinnedUnion = null;                                  // the family kept lit by a click or tap, if any
+  let litUnion = null;                                     // the family lit right now
+  const tipEl = document.getElementById('link-tip');       // the small label that names who is connected
+  function highlightUnion(key, evt) {
+    clearHighlight();
+    const u = fam.unions.get(key), parts = unionLines.get(key);
+    if (!u || !parts) return;
+    litUnion = key;
+    svg.classed('lighting', true);                         // fades everything else a little
+    parts.hits.forEach(function (h) { h.classed('hl', true); });
+    parts.lines.forEach(function (l) { l.classed('hl', true).raise(); });
+    if (unionDots.has(key)) unionDots.get(key).classed('hl', true);
+    u.parents.concat(u.children).forEach(function (id) { cardEls.get(id).classed('hl', true); });
+    tipEl.innerHTML = unionTip(u);
+    tipEl.hidden = false;
+    placeTip(evt);
+  }
+  function clearHighlight() {
+    pinnedUnion = null;
+    if (litUnion == null) return;
+    const parts = unionLines.get(litUnion);
+    parts.hits.forEach(function (h) { h.classed('hl', false); });
+    parts.lines.forEach(function (l) { l.classed('hl', false); });
+    if (unionDots.has(litUnion)) unionDots.get(litUnion).classed('hl', false);
+    cardEls.forEach(function (g) { g.classed('hl', false); });
+    svg.classed('lighting', false);
+    tipEl.hidden = true;
+    litUnion = null;
+    linkEls.forEach(function (el) { if (el.classed('lineage')) el.raise(); }); // put the coloured lines back on top
+    raisePath();
+  }
+  function unionTip(u) {                                   // "José y Magaly · no son pareja / Hijos: Andrea, Viviana"
+    let h = '<b>' + esc(u.parents.map(nameOf).join(tr('and'))) + '</b>';
+    if (u.parents.length === 2) {
+      const together = fam.partners.get(u.parents[0]).has(u.parents[1]);
+      h += '<span class="tip-sub">' + esc(tr(together ? 'tipCouple' : 'tipNotCouple')) + '</span>';
+    }
+    if (u.children.length) {
+      const label = u.children.length > 1 ? tr('tipChildren')
+        : tr(genderOf(u.children[0]) === 'female' ? 'tipDaughter' : genderOf(u.children[0]) === 'male' ? 'tipSon' : 'tipChild');
+      h += '<span class="tip-kids">' + esc(label) + ' ' + esc(u.children.map(nameOf).join(', ')) + '</span>';
+    }
+    return h;
+  }
+  function placeTip(evt) {                                 // keep the label next to the pointer, inside the window
+    if (!evt || tipEl.hidden) return;
+    const pad = 14, w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    let x = evt.clientX + pad, y = evt.clientY + pad;
+    if (x + w > window.innerWidth - 8) x = evt.clientX - w - pad;
+    if (y + h > window.innerHeight - 8) y = evt.clientY - h - pad;
+    tipEl.style.left = Math.max(8, x) + 'px';
+    tipEl.style.top = Math.max(8, y) + 'px';
   }
 
   function drawCards() {
@@ -538,6 +613,10 @@
     .clickDistance(6)                                      // A small drag still counts as a click
     .on('zoom', function (e) { viewport.attr('transform', e.transform); });
   svg.call(zoom).on('dblclick.zoom', null);                // Double-click does not zoom (avoids surprises)
+  svg.on('click.glow', function (e) {                      // Clicking empty space turns off a family kept lit by a tap
+    if (pinnedUnion != null && !e.target.closest('.link-hit')) clearHighlight();
+  });
+  svg.on('mouseleave.glow', function () { if (pinnedUnion == null) clearHighlight(); });
 
   function visibleBox() {                                  // Part of the screen not covered by the panel or chips
     const w = svg.node().clientWidth, h = svg.node().clientHeight;
@@ -614,6 +693,7 @@
   }
 
   function setFocus(id, opts) {
+    if (typeof clearHighlight === 'function' && litUnion != null) clearHighlight(); // drop any glowing family
     opts = opts || {};
     if (!fam.byId.has(id)) return;
     state.focus = id;
