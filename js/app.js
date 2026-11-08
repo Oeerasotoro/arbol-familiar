@@ -1137,6 +1137,7 @@
     h += '<h3>' + esc(tr('family')) + '</h3>';
     const parentRows = ['father', 'mother'].map(function (role) {
       const link = fam.parentLinks.get(id).find(function (l) { return l.role === role; });
+      if (!link && p.singleParent) return '';              // raised by one parent: no empty slot for the other
       if (!link) return '<li><div class="person-chip static"><span class="pc-main"><span class="pc-sub">' + esc(tr(role === 'father' ? 'fatherUnknown' : 'motherUnknown')) + '</span></span></div></li>';
       return personChip(link.id, link.confirmed ? '' : tr('unconfirmed'));
     });

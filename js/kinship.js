@@ -45,6 +45,7 @@
         unconfirmed: Array.isArray(raw.unconfirmed) ? raw.unconfirmed : [],
         partners: Array.isArray(raw.partners) ? raw.partners : [],
         notPartners: Array.isArray(raw.notPartners) ? raw.notPartners : [], // co-parents who are not a couple
+        singleParent: raw.singleParent === true,       // raised by one parent alone: the other slot is not missing, it is empty
         born: raw.born || '',
         died: raw.died || '',
         birthplace: raw.birthplace || '',
@@ -202,9 +203,11 @@
       }
     });
     if (!shared.length) return null;                   // No parent in common: not siblings
+    const completeA = la.length === 2 || fam.byId.get(a).singleParent; // all of a's parents are recorded
+    const completeB = lb.length === 2 || fam.byId.get(b).singleParent;
     let kind;                                          // 'full', 'half' or 'unknown'
     if (shared.length === 2) kind = 'full';            // Both parents shared
-    else if (la.length === 2 && lb.length === 2) kind = 'half'; // One shared, the other parents known and different
+    else if (completeA && completeB) kind = 'half';    // One shared, and the rest of each one's parents are known (or none)
     else kind = 'unknown';                             // One shared, the other parent missing on at least one side
     return { kind: kind, shared: shared, confirmed: confirmed };
   }

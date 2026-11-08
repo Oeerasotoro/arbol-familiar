@@ -71,6 +71,7 @@ Other cases follow the same idea:
 - **Partner or spouse:** add the person, then write `partners: [their number]` on either of the two. Couples who share a child are joined automatically.
 - **Parents who are not a couple:** if two people share a child but were never together or separated, write `notPartners: [their number]` on either of the two. Their relatives are then not counted as in-laws (for example, your father's brother is not your mother's brother-in-law), and the dot between them is drawn hollow.
 - **Sibling:** give the new person the same `father` and `mother` numbers. The site works out by itself whether siblings share one parent or both, and shows it on their profiles.
+- **Raised by one parent:** add `singleParent: true` to the child. The profile then shows only that parent, with no empty slot for the other, and siblings through that parent are still shown as sharing one parent.
 - **Confirming a link:** change `unconfirmed: ["father", "mother"]` to `unconfirmed: []`. Dashed lines become solid and "unconfirmed" labels disappear.
 
 Never change or reuse a number once it is given, even if a person is removed.
