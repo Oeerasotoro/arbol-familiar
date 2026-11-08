@@ -531,8 +531,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   // Same father as Oscar (José Ernesto, #2), different mothers.
   // Andrea and Viviana share a second surname (Eraso), and Luis Miguel and
   // María Fernanda share theirs (Melodelgado), so each pair is recorded with
-  // the same mother. Each mother's name is not known yet: fill it in on her
-  // record (#35, #36, #37) when you learn it.
+  // the same mother: Magaly Eraso (#35) and Sonia Melodelgado (#36).
+  // Evelyn's mother (#37) has no name yet.
   {
     id: 28,
     name: "Andrea Eraso Eraso",
@@ -642,14 +642,15 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
 
   // ===================== OTHER PARENTS OF THE HALF-SIBLINGS =====================
-  // Names not known yet. The site shows them as "Madre de Andrea y Viviana"
-  // and so on until you fill in "name". They are not recorded as couples
+  // #37 (Evelyn's mother) and #39 (Diego Fernando's father) have no name yet;
+  // the site shows them as "Madre de Evelyn" and "Padre de Diego" until you
+  // fill in "name". None of these parents are recorded as couples
   // with José Ernesto or Gloria (notPartners), so their relatives are not
   // counted as in-laws. If one of them is a current partner, delete that
   // person's notPartners line.
   {
     id: 35,
-    name: "",                                  // Mother of Andrea and Viviana (an Eraso) — name not known yet
+    name: "Magaly Eraso",                      // Mother of Andrea and Viviana. Not the same person as Magaly Eraso #11 (José Ernesto's sister)
     gender: "female",
     father: null,
     mother: null,
@@ -660,15 +661,12 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Madre de Andrea y Viviana Eraso Eraso; falta su nombre.",
-      en: "Mother of Andrea and Viviana Eraso Eraso; name not known yet.",
-    },
+    description: "",
     bio: "",
   },
   {
     id: 36,
-    name: "",                                  // Mother of Luis Miguel and María Fernanda (a Melodelgado) — name not known yet
+    name: "Sonia Melodelgado",                 // Mother of Luis Miguel and María Fernanda
     gender: "female",
     father: null,
     mother: null,
@@ -679,10 +677,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Madre de Luis Miguel y María Fernanda Eraso Melodelgado; falta su nombre.",
-      en: "Mother of Luis Miguel and María Fernanda Eraso Melodelgado; name not known yet.",
-    },
+    description: "",
     bio: "",
   },
   {
@@ -706,7 +701,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
   },
   {
     id: 38,
-    name: "",                                  // Father of Daniel Alfonso (a Guevara) — name not known yet
+    name: "Johnny Guevara",                    // Father of Daniel Alfonso
     gender: "male",
     father: null,
     mother: null,
@@ -717,10 +712,7 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     died: "",
     birthplace: "",
     photo: "",
-    description: {
-      es: "Padre de Daniel Alfonso Guevara Toro; falta su nombre.",
-      en: "Father of Daniel Alfonso Guevara Toro; name not known yet.",
-    },
+    description: "",
     bio: "",
   },
   {
