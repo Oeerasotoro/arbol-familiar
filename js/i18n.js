@@ -68,6 +68,10 @@
       open: 'Abrir',
       samePerson: 'Es la misma persona.',
       partnersNoDegree: 'Entre una pareja no hay grado de consanguinidad.',
+      coparentsNoDegree: 'No tienen parentesco entre sí; tienen hijos en común.',
+      legendCouple: 'Pareja',
+      legendCoparents: 'Padres que no son pareja',
+      withParent: 'con {name}',
       noDetails: 'Todavía no hay descripción ni biografía.',
       unconfirmed: 'sin confirmar',
       photoOf: 'Foto de {name}',
@@ -138,6 +142,10 @@
       open: 'Open',
       samePerson: 'That is the same person.',
       partnersNoDegree: 'Partners have no degree of blood kinship between them.',
+      coparentsNoDegree: 'No kinship between them; they share children.',
+      legendCouple: 'Couple',
+      legendCoparents: 'Parents who are not a couple',
+      withParent: 'with {name}',
       noDetails: 'No description or biography yet.',
       unconfirmed: 'unconfirmed',
       photoOf: 'Photo of {name}',
@@ -264,6 +272,15 @@
     const i = g(gender);
     if (rel.type === 'self') return lang === 'es' ? 'Viendo como' : 'Viewing as';
     if (rel.type === 'partner') return lang === 'es' ? 'Pareja' : 'Partner';
+    if (rel.type === 'coparent') {                     // share a child but are not a couple: "Madre de Oscar"
+      const kids = rel.childNames || [];
+      if (lang === 'es') {
+        const base = esTriple(['Padre', 'Madre'])[i];
+        return kids.length === 1 ? base + ' de ' + kids[0] : base + ' de sus hijos';
+      }
+      const baseEn = ['Father', 'Mother', 'Parent'][i];
+      return kids.length === 1 ? kids[0] + '’s ' + lower(baseEn) : baseEn + ' of their children';
+    }
     if (rel.type === 'none') return rel.connected
       ? (lang === 'es' ? 'Familia extendida' : 'Extended family')
       : (lang === 'es' ? 'Sin conexión registrada' : 'Not connected');
@@ -313,6 +330,12 @@
      --------------------------------------------------------------- */
   function relationSentence(lang, rel, yName, xName, yGender) {
     if (rel.type === 'self') return [{ text: t(lang, 'samePerson') }];
+    if (rel.type === 'coparent') {                     // "Gloria y José son los padres de Oscar; no son pareja."
+      const list = (rel.childFullNames || []).join(lang === 'es' ? ' y ' : ' and ');
+      return lang === 'es'
+        ? [{ name: yName }, { text: ' y ' }, { name: xName }, { text: ' son los padres de ' + list + '; no son pareja.' }]
+        : [{ name: yName }, { text: ' and ' }, { name: xName }, { text: ' are the parents of ' + list + '; they are not a couple.' }];
+    }
     if (rel.type === 'none') {
       if (lang === 'es') return rel.connected
         ? [{ text: 'No hay parentesco de sangre ni político registrado entre ' }, { name: yName }, { text: ' y ' }, { name: xName }, { text: '. Abajo se ve cómo se conectan dentro de la familia.' }]
@@ -332,6 +355,7 @@
      --------------------------------------------------------------- */
   function degreeText(lang, rel) {
     if (rel.type === 'partner') return t(lang, 'partnersNoDegree');
+    if (rel.type === 'coparent') return t(lang, 'coparentsNoDegree');
     if (rel.type !== 'blood' && rel.type !== 'affinity') return t(lang, 'none');
     const d = rel.degree;
     if (lang === 'es') {

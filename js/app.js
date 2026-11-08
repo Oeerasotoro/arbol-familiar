@@ -105,6 +105,12 @@
   const COUPLE_GAP = 44;                                   // Space between two partners' cards
   const layout = { people: new Map(), unions: new Map() };
 
+  function sideBySide(id) {                                // Who sits next to whom: partners and parents of the same child
+    const s = new Set(fam.partners.get(id));
+    fam.coparents.get(id).forEach(function (q) { s.add(q); });
+    return s;
+  }
+
   function buildHouseholds() {                             // Group people who are partners (directly or in a chain)
     const groupOf = new Map();                             // person number -> household index
     const groups = [];
@@ -116,7 +122,7 @@
       while (stack.length) {                               // Collect everyone joined by partner links
         const cur = stack.pop();
         members.push(cur);
-        fam.partners.get(cur).forEach(function (q) {
+        sideBySide(cur).forEach(function (q) {           // partners and co-parents share a household box
           if (!groupOf.has(q)) { groupOf.set(q, groups.length); stack.push(q); }
         });
       }
@@ -127,13 +133,13 @@
   function orderHousehold(ids) {                           // Left-to-right order inside a household
     if (ids.length <= 2) return ids.slice().sort(function (a, b) { return a - b; });
     const left = new Set(ids);                             // Walk the chain of partners from one end
-    const deg = function (id) { return Array.from(fam.partners.get(id)).filter(function (q) { return left.has(q); }).length; };
+    const deg = function (id) { return Array.from(sideBySide(id)).filter(function (q) { return left.has(q); }).length; };
     let cur = ids.slice().sort(function (a, b) { return deg(a) - deg(b) || a - b; })[0];
     const order = [];
     while (cur != null) {
       order.push(cur);
       left.delete(cur);
-      const nextId = Array.from(fam.partners.get(cur)).find(function (q) { return left.has(q); });
+      const nextId = Array.from(sideBySide(cur)).find(function (q) { return left.has(q); });
       cur = nextId != null ? nextId : (left.size ? left.values().next().value : null);
     }
     return order;
@@ -275,6 +281,7 @@
   const svg = d3.select('#tree');                          // The drawing surface
   const viewport = d3.select('#viewport');                 // Group that moves when you pan or zoom
   const linkLayer = d3.select('#links');
+  const dotLayer = d3.select('#dots');                     // Couple markers, drawn above the lines
   const cardLayer = d3.select('#cards');
   const linkEls = new Map();                               // line id -> line element, to colour lines later
   const cardEls = new Map();                               // person number -> card element
@@ -323,8 +330,9 @@
         const unconfirmed = u.parents.some(function (pid) { return !linkConfirmed(k.id, pid); });
         addLink('cs:' + u.key + ':' + k.id, [[up.x, up.y], [up.x, busY], [k.pos.x, busY], [k.pos.x, k.pos.y - CARD_H / 2]], unconfirmed);
       });
-      if (up.couple) {                                     // Small dot marking the couple
-        linkLayer.append('circle').attr('class', 'union-dot').attr('cx', up.x).attr('cy', up.y).attr('r', 4);
+      if (up.couple) {                                     // Dot marking the couple: filled = together, hollow = not a couple
+        const together = fam.partners.get(u.parents[0]).has(u.parents[1]);
+        dotLayer.append('circle').attr('class', 'union-dot' + (together ? '' : ' apart')).attr('cx', up.x).attr('cy', up.y).attr('r', 4);
       }
     });
   }
@@ -448,7 +456,7 @@
     const anc = Kinship.ancestorsOf(fam, id);
     const ids = [];
     anc.forEach(function (info, aid) { if (info.depth <= (isPhone() ? 1 : 2)) ids.push(aid); });
-    fam.partners.get(id).forEach(function (q) { if (!isPhone()) ids.push(q); });
+    sideBySide(id).forEach(function (q) { if (!isPhone()) ids.push(q); });
     fitPeople(ids, duration, isPhone() ? 0.5 : 0.7, isPhone() ? 0.8 : 0.95, id); // Never zoom out so far that names get hard to read
   }
   function fitPeople(ids, duration, minK, maxK, anchorId) { // Zoom so that all these people are visible
@@ -488,13 +496,21 @@
     return seen;
   }
 
+  function decorate(rel) {                                 // Add the child's name for "Madre de Oscar" style labels
+    if (rel.type === 'coparent') {
+      rel.childNames = rel.children.map(function (c) { return person(c).name ? person(c).name.split(' ')[0] : tr('nameUnknown'); });
+      rel.childFullNames = rel.children.map(nameOf);
+    }
+    return rel;
+  }
+
   function setFocus(id, opts) {
     opts = opts || {};
     if (!fam.byId.has(id)) return;
     state.focus = id;
     state.component = componentOf(id);
     people.forEach(function (p) {                          // Work out everyone's relationship to the new focus
-      const rel = Kinship.relation(fam, id, p.id);
+      const rel = decorate(Kinship.relation(fam, id, p.id));
       if (rel.type === 'none') rel.connected = state.component.has(p.id);
       state.relations.set(p.id, rel);
     });
@@ -522,6 +538,7 @@
         .classed('rel-blood', rel.type === 'blood')
         .classed('rel-affinity', rel.type === 'affinity')
         .classed('rel-partner', rel.type === 'partner')
+        .classed('rel-coparent', rel.type === 'coparent')
         .classed('rel-none', rel.type === 'none');
       const relEl = g.select('.card-rel').text(label);     // Write the label, shortening it if too long
       truncate(relEl, '', TEXT_W - tagW, false);
@@ -791,7 +808,11 @@
 
     const kids = fam.children.get(id);
     if (kids.length) h += '<h4>' + esc(tr('children')) + '</h4><ul class="people-list">' + kids.map(function (c) {
-      return personChip(c, linkConfirmed(c, id) ? '' : tr('unconfirmed'));
+      const other = fam.parentLinks.get(c).find(function (l) { return l.id !== id; }); // the child's other parent, if known
+      const notes = [];
+      if (other) notes.push(tr('withParent', { name: nameOf(other.id) }));
+      if (!linkConfirmed(c, id)) notes.push(tr('unconfirmed'));
+      return personChip(c, notes.join(' · '));
     }).join('') + '</ul>';
 
     panelBody.innerHTML = '<div class="profile">' + h + '</div>';
@@ -865,12 +886,12 @@
       if (a === b) {
         h += '<p class="result-sentence">' + esc(tr('samePerson')) + '</p>';
       } else {
-        const relAtoB = Kinship.relation(fam, b, a);       // What A is to B
-        const relBtoA = Kinship.relation(fam, a, b);       // What B is to A
+        const relAtoB = decorate(Kinship.relation(fam, b, a)); // What A is to B
+        const relBtoA = decorate(Kinship.relation(fam, a, b)); // What B is to A
         const path = Kinship.connectionPath(fam, a, b);
         if (relAtoB.type === 'none') relAtoB.connected = relBtoA.connected = !!path;
         h += '<p class="result-sentence">' + sentenceHTML(I18N.relationSentence(state.lang, relAtoB, nameOf(a), nameOf(b), genderOf(a))) + '</p>';
-        if (relAtoB.type !== 'none') {
+        if (['none', 'partner', 'coparent'].indexOf(relAtoB.type) === -1) { // the reverse adds nothing for couples or co-parents
           h += '<p class="result-reverse">' + sentenceHTML(I18N.relationSentence(state.lang, relBtoA, nameOf(b), nameOf(a), genderOf(b))) + '</p>';
         }
         // ---- Facts: degree, shared ancestors, DNA ----
@@ -1012,6 +1033,7 @@
     document.querySelectorAll('.lang-toggle button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang)); });
     if (cardEls.size) {                                    // Redraw everything that contains words
       cardEls.forEach(function (g, id) { if (!person(id).name) wrapText(g.select('.card-name'), nameOf(id), TEXT_W, 2, 17); });
+      state.relations.forEach(decorate);                   // refresh names used inside labels
       updateCardMeta();
       updateCardLabels();
       updateChips();

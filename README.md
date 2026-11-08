@@ -69,6 +69,7 @@ Other cases follow the same idea:
 
 - **Parent of someone already in the tree:** add the new person, then put their number in the child's `father` or `mother` field.
 - **Partner or spouse:** add the person, then write `partners: [their number]` on either of the two. Couples who share a child are joined automatically.
+- **Parents who are not a couple:** if two people share a child but were never together or separated, write `notPartners: [their number]` on either of the two. Their relatives are then not counted as in-laws (for example, your father's brother is not your mother's brother-in-law), and the dot between them is drawn hollow.
 - **Sibling:** give the new person the same `father` and `mother` numbers. The site works out full and half siblings by itself.
 - **Confirming a link:** change `unconfirmed: ["father", "mother"]` to `unconfirmed: []`. Dashed lines become solid and "unconfirmed" labels disappear.
 

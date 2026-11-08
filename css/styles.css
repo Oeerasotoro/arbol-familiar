@@ -16,6 +16,7 @@
   --muted: #8b7f71;         /* quiet text such as numbers and dates */
   --border: #e5d9c8;        /* thin borders */
   --line: #bfae95;          /* family lines */
+  --line-strong: #9f8d74;   /* outline of the hollow 'not a couple' dot */
   --accent: #b4532a;        /* terracotta: focus person and their direct line */
   --accent-ink: #8f3d1b;    /* darker terracotta for text */
   --accent-soft: #f7e4d7;   /* pale terracotta for backgrounds */
@@ -145,7 +146,9 @@ svg { display: block; }
 .link.unconfirmed { stroke-dasharray: 5 5; }                    /* dashed = not confirmed */
 .link.lineage { stroke: var(--accent); stroke-width: 2.6; }     /* the focus person's direct line */
 .link.on-path { stroke: var(--path); stroke-width: 3.6; }       /* path between compared people */
-.union-dot { fill: var(--line); }
+.union-dot { fill: var(--line); stroke: var(--bg); stroke-width: 1.5; }
+.union-dot.apart { fill: var(--bg); stroke: var(--line-strong, #9f8d74); stroke-width: 2; } /* hollow = parents who are not a couple */
+.card.rel-coparent .card-rel { fill: var(--marriage); }
 
 /* Person cards */
 .card { cursor: pointer; }

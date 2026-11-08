@@ -60,6 +60,7 @@
       </defs>
       <g id="viewport">                                       <!-- Moved and scaled when you drag or zoom -->
         <g id="links"></g>                                    <!-- Lines between relatives -->
+        <g id="dots"></g>                                     <!-- Dots where a couple's lines meet -->
         <g id="cards"></g>                                    <!-- One card per person -->
       </g>
     </svg>
@@ -83,6 +84,8 @@
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-dashed" d="M2 5h36"></path></svg><span data-i18n="legendUnconfirmed"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-lineage" d="M2 5h36"></path></svg><span data-i18n="legendLine"></span></li>
         <li><svg viewBox="0 0 40 10"><path class="lg-line lg-path" d="M2 5h36"></path></svg><span data-i18n="legendPath"></span></li>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCouple"></span></li>
+        <li><svg viewBox="0 0 40 10"><path class="lg-line" d="M2 5h36"></path><circle class="union-dot apart" cx="20" cy="5" r="4"></circle></svg><span data-i18n="legendCoparents"></span></li>
       </ul>
     </details>
 

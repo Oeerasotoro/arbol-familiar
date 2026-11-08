@@ -43,6 +43,7 @@
         mother: raw.mother == null ? null : raw.mother,
         unconfirmed: Array.isArray(raw.unconfirmed) ? raw.unconfirmed : [],
         partners: Array.isArray(raw.partners) ? raw.partners : [],
+        notPartners: Array.isArray(raw.notPartners) ? raw.notPartners : [], // co-parents who are not a couple
         born: raw.born || '',
         died: raw.died || '',
         birthplace: raw.birthplace || '',
@@ -54,15 +55,21 @@
 
     const parentLinks = new Map();                     // child number -> list of {id, role, confirmed}
     const children = new Map();                        // parent number -> list of child numbers
-    const partners = new Map();                        // person number -> set of partner numbers
+    const partners = new Map();                        // person number -> set of partner numbers (couples)
+    const coparents = new Map();                       // person number -> set of people they share a child with
     byId.forEach(function (p) {                        // Make empty slots for every person first
       parentLinks.set(p.id, []);
       children.set(p.id, []);
       partners.set(p.id, new Set());
+      coparents.set(p.id, new Set());
     });
 
+    function notACouple(a, b) {                        // Did either person list the other in "notPartners"?
+      return (byId.has(a) && byId.get(a).notPartners.indexOf(b) !== -1) ||
+             (byId.has(b) && byId.get(b).notPartners.indexOf(a) !== -1);
+    }
     function addPartners(a, b) {                       // Record a couple in both directions
-      if (a === b || !byId.has(a) || !byId.has(b)) return;
+      if (a === b || !byId.has(a) || !byId.has(b) || notACouple(a, b)) return;
       partners.get(a).add(b);
       partners.get(b).add(a);
     }
@@ -89,7 +96,11 @@
         });
         children.get(pid).push(p.id);                  // Save the link from parent to child
       });
-      if (p.father != null && p.mother != null) addPartners(p.father, p.mother); // Co-parents form a couple
+      if (byId.has(p.father) && byId.has(p.mother) && p.father !== p.mother) {
+        coparents.get(p.father).add(p.mother);         // They share a child…
+        coparents.get(p.mother).add(p.father);
+        addPartners(p.father, p.mother);               // …and count as a couple unless "notPartners" says otherwise
+      }
       p.partners.forEach(function (q) {                // Couples written explicitly in "partners"
         if (!byId.has(q)) problems.push({ code: 'missingPartner', id: p.id, partner: q });
         else addPartners(p.id, q);
@@ -119,7 +130,8 @@
       byId: byId,
       parentLinks: parentLinks,
       children: children,
-      partners: partners,
+      partners: partners,                              // couples (married or together)
+      coparents: coparents,                            // people who share a child, couple or not
       unions: unions,
       unionKeyOf: unionKeyOf,
       problems: problems,
@@ -256,11 +268,19 @@
   /* ---------------------------------------------------------------
      relation(fam, x, y)
      The main question: what is Y to X? Checks, in order:
-       same person -> partner -> blood -> by marriage -> none.
+       same person -> partner -> parents of the same child (not a
+       couple) -> blood -> by marriage -> none.
+     Relatives "by marriage" only count through real couples, so a
+     parent's siblings are not in-laws of a co-parent who was never
+     (or is no longer) their partner.
      --------------------------------------------------------------- */
   function relation(fam, x, y) {
     if (x === y) return { type: 'self', confirmed: true };
     if (fam.partners.get(x) && fam.partners.get(x).has(y)) return { type: 'partner', confirmed: true, degree: null };
+    if (fam.coparents.get(x) && fam.coparents.get(x).has(y)) {   // share a child but are not a couple
+      const shared = fam.children.get(x).filter(function (c) { return fam.children.get(y).indexOf(c) !== -1; });
+      return { type: 'coparent', confirmed: true, degree: null, children: shared };
+    }
 
     const blood = bloodRelation(fam, x, y);            // Shared ancestry?
     if (blood) return Object.assign({ type: 'blood' }, blood);

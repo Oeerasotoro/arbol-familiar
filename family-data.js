@@ -25,10 +25,15 @@
                  relationship that depends on them is labelled
                  "unconfirmed".
      partners    Person numbers of partners or spouses, e.g. [3].
-                 Two people who share a child are joined automatically,
-                 so you only need this for couples without children
-                 recorded in the tree. Writing it on one of the two
-                 people is enough.
+                 Two people who share a child count as a couple
+                 automatically, so you only need this for couples
+                 without children recorded in the tree. Writing it on
+                 one of the two people is enough.
+     notPartners Optional. Use it for two people who share a child but
+                 are not a couple (never together, or separated), e.g.
+                 notPartners: [3]. Their relatives are then not counted
+                 as in-laws of each other, and the dot between them is
+                 drawn hollow. Writing it on one of the two is enough.
      born        Birth year or date as text, e.g. "1958" or "12 mar 1958".
      died        Death year or date as text. Leave "" for living people.
      birthplace  Place of birth as text, e.g. "Pasto, Nariño".
@@ -90,7 +95,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     father: 4,                                 // José Ernesto Eraso Rosero
     mother: 5,                                 // Clara Hernández
     unconfirmed: [],
-    partners: [3],                             // Partner of Gloria (#3)
+    partners: [],
+    notPartners: [3],                          // Oscar's parents are not a couple, so no in-law relations between their families
     born: "",
     died: "",
     birthplace: "",
@@ -105,7 +111,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     father: 6,                                 // Andrés Toro Pantoja
     mother: 7,                                 // María del Carmen Riascos
     unconfirmed: [],
-    partners: [2],
+    partners: [],
+    notPartners: [2],                          // Not a couple with José Ernesto (#2)
     born: "",
     died: "",
     birthplace: "",
@@ -151,8 +158,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 6,
     name: "Andrés Toro Pantoja",               // Maternal grandfather
     gender: "male",
-    father: null,
-    mother: null,
+    father: 20,                                // Name not known yet (a Toro)
+    mother: 21,                                // Name not known yet (a Pantoja)
     unconfirmed: [],
     partners: [7],                             // Partner of María del Carmen (#7)
     born: "",
@@ -166,8 +173,8 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     id: 7,
     name: "María del Carmen Riascos",          // Maternal grandmother (spelled like her children's surname; change to "Ríascos" if that is correct)
     gender: "female",
-    father: null,
-    mother: null,
+    father: 23,                                // Name not known yet (a Riascos)
+    mother: null,                              // Not known yet
     unconfirmed: [],
     partners: [6],
     born: "",
@@ -373,12 +380,157 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
     bio: "",
   },
 
+  // ===================== GRANDFATHER ANDRÉS'S PARENTS AND BROTHER =====================
+  // Andrés and Agustín share both surnames (Toro Pantoja), so they are
+  // recorded as full brothers. Their parents' names are not known yet:
+  // fill in the name fields when you learn them.
+  {
+    id: 20,
+    name: "",                                  // Father of Andrés and Agustín (a Toro) — name not known yet
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [21],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Padre de Andrés y Agustín Toro Pantoja; falta su nombre.",
+      en: "Father of Andrés and Agustín Toro Pantoja; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 21,
+    name: "",                                  // Mother of Andrés and Agustín (a Pantoja) — name not known yet
+    gender: "female",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [20],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Madre de Andrés y Agustín Toro Pantoja; falta su nombre.",
+      en: "Mother of Andrés and Agustín Toro Pantoja; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 22,
+    name: "Agustín Toro Pantoja",              // Brother of grandfather Andrés (#6)
+    gender: "male",
+    father: 20,
+    mother: 21,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+
+  // ===================== GRANDMOTHER MARÍA DEL CARMEN'S PARENT AND SIBLINGS =====================
+  // Her siblings share her first surname, Riascos, which comes from the
+  // father, so they are linked through an unnamed father (#23). Their
+  // mothers are not recorded, so the site shows them as siblings without
+  // saying whether they are full or half siblings. If you learn they share
+  // the same mother, add her as a new person and put her number in
+  // "mother" for María del Carmen and each sibling.
+  {
+    id: 23,
+    name: "",                                  // Father of María del Carmen and her siblings (a Riascos) — name not known yet
+    gender: "male",
+    father: null,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Padre de María del Carmen Riascos y sus hermanos; falta su nombre.",
+      en: "Father of María del Carmen Riascos and her siblings; name not known yet.",
+    },
+    bio: "",
+  },
+  {
+    id: 24,
+    name: "Julio Riascos",
+    gender: "male",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 25,
+    name: "Lucho Riascos",                     // "Lucho" is usually short for Luis; use the full name if you know it
+    gender: "male",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 26,
+    name: "Tulia Riascos",
+    gender: "female",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: "",
+    bio: "",
+  },
+  {
+    id: 27,
+    name: "",                                  // Name still to be confirmed
+    gender: "unknown",
+    father: 23,
+    mother: null,
+    unconfirmed: [],
+    partners: [],
+    born: "",
+    died: "",
+    birthplace: "",
+    photo: "",
+    description: {
+      es: "Hermano o hermana de María del Carmen Riascos; falta el nombre.",
+      en: "A sibling of María del Carmen Riascos; name still to be confirmed.",
+    },
+    bio: "",
+  },
+
   // ===================== ADD NEW PEOPLE BELOW THIS LINE =====================
   // Copy this template, remove the // at the start of each line,
   // and give it the next free number.
   //
   // {
-  //   id: 20,
+  //   id: 28,
   //   name: "",
   //   gender: "unknown",
   //   father: null,
@@ -395,4 +547,4 @@ window.FAMILY_DATA = [                         // The list of everyone in the tr
 
 ];                                             // The list of people ends here — keep this line
 
-// Highest person number used so far: 19   ← update this note when you add someone
+// Highest person number used so far: 27   ← update this note when you add someone
