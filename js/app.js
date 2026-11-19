@@ -33,6 +33,7 @@
     ? SETTINGS.defaultFocus
     : (people[0] ? people[0].id : null);
   if (defaultFocus != null) FamilyLines.setBase(fam, defaultFocus); // the starting person's surnames get the main branch colours
+  const FAMILIES = FamilyGroups.list(fam, SETTINGS, defaultFocus);    // families offered in the filter (js/families.js)
 
   /* ===================================================================
      3. CURRENT STATE OF THE PAGE
@@ -51,6 +52,8 @@
     expanded: new Set(),                                   // relatives by marriage whose own family branch is open
     forced: new Set(),                                     // people shown because a visitor asked for them directly
     lines: null,                                           // family branch of each person (js/lines.js), for the colours
+    filter: null,                                          // family filter at the top: null = everyone (see section 9c)
+    filterSet: null,                                       // the people that filter shows
     colorLines: loadPref('tree-colors', '1') === '1',      // colours by branch on (remembered in this browser)
   };
 
@@ -774,6 +777,11 @@
     if (game.mode === 'focus') game.q = null;              // the game's questions about the old focus person no longer fit
     state.expanded.clear();                                // every relative-by-marriage branch starts closed
     state.forced.clear();
+    if (state.filter) {                                    // "Lado paterno/materno" now means this person's sides
+      state.filterSet = filterMembers(state.filter);
+      if (!state.filterSet) { state.filter = null; }       // (that parent is not recorded: show everyone)
+    }
+    renderFamilyBar();
     state.visible = computeVisible();
     renderTree(null);                                      // draw the new focus person's family
     updateChips();
@@ -783,7 +791,9 @@
     if (state.panel === 'summary') renderSummaryPanel();   // the summary follows the new focus person
     if (state.panel === 'game') { ensureQuestion(); renderGame(); }
     update3DLink();
-    if (opts.recenter !== false) showNeighborhood(id, opts.duration); // Glide to the new focus person
+    if (opts.recenter !== false) {                         // Glide to the new focus person
+      if (state.filter && !state.filterSet.has(id)) frameFilter(opts.duration); else showNeighborhood(id, opts.duration);
+    }
   }
 
   function updateCardLabels() {
@@ -896,6 +906,11 @@
      closed "branch" until a visitor clicks that partner.
      =================================================================== */
   function computeVisible() {                              // Who should be drawn right now
+    if (state.filter) {                                    // a family filter is on: exactly that family
+      const only = new Set(state.filterSet);
+      state.forced.forEach(function (id) { only.add(id); });
+      return only;
+    }
     const vis = new Set(Kinship.familyCore(fam, state.focus));
     state.forced.forEach(function (id) { vis.add(id); });
     let grew = true;
@@ -913,6 +928,7 @@
     return id !== state.focus && !!rel && rel.type !== 'blood' && rel.type !== 'self';
   }
   function hiddenBranch(id) {                              // People that opening this person's branch would reveal
+    if (state.filter) return [];                           // no "Ver familia" pills while a family filter is on
     if (!isByMarriage(id) || !state.visible.has(id)) return [];
     return Array.from(Kinship.familyCore(fam, id)).filter(function (q) { return !state.visible.has(q); });
   }
@@ -930,6 +946,11 @@
   }
 
   function reveal(id) {                                    // Make sure a person is drawn, opening the branches that lead to them
+    if (state.filter && !state.filterSet.has(id)) {        // someone outside the chosen family: show everyone again
+      setFilter(null, { silent: true });
+      state.visible = computeVisible();
+      if (state.visible.has(id)) return true;
+    }
     if (state.visible.has(id)) return false;
     for (let guard = 0; guard < 25 && !state.visible.has(id); guard++) {
       const path = Kinship.connectionPath(fam, state.focus, id);
@@ -984,6 +1005,91 @@
       b.on('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); toggleBranch(id); } });
     });
   }
+
+  /* ===================================================================
+     9c. FAMILY FILTER ("Ver: Todos · Lado paterno · Lado materno · Eraso …")
+     Shows only one side of the focus person's family, or one family by
+     surname, fully opened. Who belongs where is worked out in
+     js/families.js; the families offered are listed in family-data.js.
+     The choice is kept in the address (#familia=toro), so a link can be
+     shared already filtered.
+     =================================================================== */
+  const familyCache = new Map();                           // surname families do not depend on the focus person
+  function filterDef(key) {                                // 'paterno', 'materno' or a family key such as 'toro'
+    if (key === 'paterno') return { key: key, kind: 'side', side: 'father' };
+    if (key === 'materno') return { key: key, kind: 'side', side: 'mother' };
+    const f = FAMILIES.find(function (x) { return x.key === key; });
+    return f ? { key: key, kind: 'family', family: f } : null;
+  }
+  function filterMembers(f) {
+    if (f.kind === 'side') return FamilyGroups.sideMembers(fam, state.focus, f.side);
+    if (!familyCache.has(f.key)) familyCache.set(f.key, FamilyGroups.familyMembers(fam, f.family));
+    return familyCache.get(f.key);
+  }
+  function hasParent(id, role) { return fam.parentLinks.get(id).some(function (l) { return l.role === role; }); }
+
+  function setFilter(key, opts) {
+    opts = opts || {};
+    const f = key ? filterDef(key) : null;
+    const set = f ? filterMembers(f) : null;
+    state.filter = set ? f : null;
+    state.filterSet = set || null;
+    state.expanded.clear();
+    state.forced.clear();
+    renderFamilyBar();
+    writeHash();
+    update3DLink();
+    if (opts.silent) return;                               // the caller redraws
+    state.visible = computeVisible();
+    renderTree(null);
+    frameFilter();
+  }
+  function frameFilter(duration) {                         // Show the chosen family nicely after the filter changes
+    if (!state.filter) { showNeighborhood(state.focus, duration); return; }
+    const anchor = state.filter.kind === 'family'
+      ? state.filter.family.founders.find(function (id) { return layout.people.has(id); }) // the family's oldest ancestor, at the top
+      : state.focus;
+    fitPeople(Array.from(state.visible), duration == null ? 900 : duration, isPhone() ? 0.42 : 0.5, isPhone() ? 0.8 : 0.95, anchor);
+  }
+
+  function renderFamilyBar() {                             // The row of family buttons at the top of the tree
+    const bar = $('#family-bar');
+    if (!FAMILIES.length && !hasParent(state.focus, 'father') && !hasParent(state.focus, 'mother')) { bar.hidden = true; return; }
+    const active = state.filter ? state.filter.key : '';
+    const given = givenName(nameOf(state.focus));
+    const opts = [{ key: '', label: tr('famAll'), title: tr('famAllTitle') }];
+    if (hasParent(state.focus, 'father')) opts.push({ key: 'paterno', label: tr('famFather'), title: tr('famFatherTitle', { name: given }) });
+    if (hasParent(state.focus, 'mother')) opts.push({ key: 'materno', label: tr('famMother'), title: tr('famMotherTitle', { name: given }) });
+    const sideCount = opts.length;
+    FAMILIES.forEach(function (f) {
+      opts.push({ key: f.key, label: f.name, color: FamilyLines.colorForSurname(f.name),
+        title: tr('famFamilyTitle', { surname: f.name, founder: f.founders.map(nameOf).join(tr('and')) }) });
+    });
+    let h = '<span class="fb-label">' + esc(tr('famShow')) + '</span>';
+    opts.forEach(function (o, i) {
+      if (i === sideCount && i > 0) h += '<span class="fb-sep" aria-hidden="true"></span>';
+      const on = o.key === active;
+      h += '<button type="button" class="fb-btn' + (on ? ' on' : '') + '" data-family="' + esc(o.key) + '" aria-pressed="' + on + '" title="' + esc(o.title) + '">' +
+        (o.color ? '<i style="background:' + o.color + '"></i>' : '') + esc(o.label) +
+        (on && state.filterSet ? ' <span class="fb-count">' + state.filterSet.size + '</span>' : '') + '</button>';
+    });
+    bar.innerHTML = h;
+    bar.hidden = false;
+    bar.setAttribute('aria-label', tr('famBarLabel'));
+    const note = $('#filter-note');                        // the focus person is not part of the chosen family
+    const outside = !!state.filter && !state.filterSet.has(state.focus);
+    note.hidden = !outside;
+    if (outside) note.textContent = tr('famNotIn', { name: nameOf(state.focus), given: given });
+    const btn = bar.querySelector('.fb-btn.on');           // keep the chosen button in view on phones
+    if (btn && bar.scrollWidth > bar.clientWidth) bar.scrollLeft = Math.max(0, btn.offsetLeft - 60);
+  }
+  $('#family-bar').addEventListener('click', function (e) {
+    const b = e.target.closest('[data-family]');
+    if (!b) return;
+    const key = b.dataset.family;
+    if ((state.filter ? state.filter.key : '') === key) return;
+    setFilter(key || null);
+  });
 
   function renderTree(anchorId) {                          // Draw (or redraw) the tree for the people in state.visible
     if (litUnion != null) clearHighlight();
@@ -1832,6 +1938,7 @@
       if (state.panel === 'game') renderGame();
       if (!resultsEl.hidden) renderResults();
       renderLineLegend();
+      renderFamilyBar();
       update3DLink();
       renderProblems();
     }
@@ -1854,9 +1961,13 @@
     const f = Number(params.get('focus'));
     return fam.byId.has(f) ? f : null;
   }
+  function readFamilyHash() {                              // "#familia=toro"
+    return new URLSearchParams(location.hash.slice(1)).get('familia') || '';
+  }
   function writeHash() {
     const params = new URLSearchParams();
     if (state.focus !== defaultFocus) params.set('focus', state.focus);
+    if (state.filter) params.set('familia', state.filter.key);
     if (state.lang !== (SETTINGS.defaultLanguage === 'en' ? 'en' : 'es')) params.set('lang', state.lang);
     const s = params.toString();
     history.replaceState(null, '', s ? '#' + s : location.pathname + location.search);
@@ -1917,6 +2028,7 @@
     const params = new URLSearchParams();
     params.set('focus', state.focus);
     params.set('lang', state.lang);
+    if (state.filter) params.set('familia', state.filter.key);
     $('#view-3d').href = '3d.html#' + params.toString();
   }
   document.addEventListener('keydown', function (e) {
@@ -1924,8 +2036,13 @@
     if (e.key === 'Escape' && !typing && !panel.hidden) closePanel(); // Esc closes the panel
     if (e.key === '/' && !typing) { e.preventDefault(); searchInput.focus(); } // "/" jumps to the search box
   });
-  window.addEventListener('hashchange', function () {      // Browser back/forward with a #focus link
+  window.addEventListener('hashchange', function () {      // Browser back/forward, or a pasted #focus / #familia link
     const f = readHash();
+    const fk = readFamilyHash();
+    if (fk !== (state.filter ? state.filter.key : '') && (fk === '' || filterDef(fk))) {
+      setFilter(fk || null, { silent: f != null && f !== state.focus });
+      if (f == null || f === state.focus) return;
+    }
     if (f != null && f !== state.focus) setFocus(f);
   });
   if (window.innerWidth > 760) $('#legend').open = true;   // Legend starts open on large screens
@@ -1941,7 +2058,9 @@
     if (!people.length) return;                            // Nothing to draw yet
     const startFocus = readHash() || defaultFocus;
     const openId = Number(new URLSearchParams(location.hash.slice(1)).get('open')); // "#open=12": open that profile (used by the 3D view)
-    setFocus(startFocus, { duration: 0 });                 // Label everyone and jump (no animation) to the focus person
+    state.filter = filterDef(readFamilyHash());            // "#familia=eraso": start with that family only
+    setFocus(startFocus, { duration: 0, recenter: !state.filter }); // Label everyone and jump (no animation) to the focus person
+    if (state.filter) frameFilter(0);
     if (fam.byId.has(openId)) openProfile(openId, { pan: true });
   }
   const fontsReady = document.fonts && document.fonts.load

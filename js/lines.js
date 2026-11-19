@@ -184,6 +184,21 @@
     });
   }
 
+  /* The colour a surname uses (registering a spare colour the first time). */
+  function colorForSurname(surname) {
+    const name = norm(surname);
+    if (!surnameColors.has(name)) {
+      const used = new Set(surnameColors.values());
+      let color = SPARE[spareNext % SPARE.length];
+      for (let i = 0; i < SPARE.length; i++) {
+        const c = SPARE[(spareNext + i) % SPARE.length];
+        if (!used.has(c)) { color = c; spareNext = (spareNext + i + 1) % SPARE.length; break; }
+      }
+      surnameColors.set(name, color);
+    }
+    return surnameColors.get(name);
+  }
+
   /* A colour mixed with white, for soft card backgrounds: tint('#b4532a', 0.08) */
   function tint(hex, amount) {
     const n = parseInt(hex.slice(1), 16);
@@ -211,7 +226,7 @@
     return '';
   }
 
-  const api = { COLORS: COLORS, ROLES: ROLES, compute: compute, setBase: setBase, grandparents: grandparents, surnameOf: surnameOf, tint: tint, label: label, sublabel: sublabel };
+  const api = { COLORS: COLORS, ROLES: ROLES, compute: compute, setBase: setBase, colorForSurname: colorForSurname, grandparents: grandparents, surnameOf: surnameOf, tint: tint, label: label, sublabel: sublabel };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; // for automated tests
   root.FamilyLines = api;                              // in the browser: window.FamilyLines
 })(typeof window !== 'undefined' ? window : globalThis);

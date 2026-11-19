@@ -42,7 +42,17 @@
     selected: null,                                        // star whose card is open
     hovered: null,                                         // star under the mouse
     spinning: !reduceMotion,                               // slow automatic turn
+    filterKey: hashParams.get('familia') || '',            // family chosen in the tree's filter (#familia=toro)
+    only: null,                                            // the people of that family; the rest fade into the background
   };
+  const FAMILIES = FamilyGroups.list(fam, SETTINGS, defaultFocus); // same families as the tree's filter (js/families.js)
+  function filterMembers() {                               // null = no filter
+    const k = state.filterKey;
+    if (!k) return null;
+    if (k === 'paterno' || k === 'materno') return FamilyGroups.sideMembers(fam, state.focus, k === 'paterno' ? 'father' : 'mother');
+    const f = FAMILIES.find(function (x) { return x.key === k; });
+    return f ? FamilyGroups.familyMembers(fam, f) : null;
+  }
 
   /* ===================================================================
      3. SMALL HELPERS (the same as in js/app.js)
@@ -362,7 +372,7 @@
     const line = new THREE.Line(geo, mat);
     if (dashed) line.computeLineDistances();
     scene.add(line);
-    links.push({ line: line, idFn: idFn });
+    links.push({ line: line, idFn: idFn, base: mat.opacity });
   }
 
   /* ===================================================================
@@ -376,6 +386,8 @@
       state.relations.set(p.id, rel);
     });
     state.lines = FamilyLines.compute(fam, state.focus, function (pid) { return state.relations.get(pid); });
+    state.only = filterMembers();
+    if (!state.only) state.filterKey = '';
   }
   function paint() {                                       // colour every star and line, redraw labels
     stars.forEach(function (st, id) {
@@ -385,9 +397,17 @@
       const scale = id === state.focus ? 1.45 : 1;
       st.core.scale.setScalar(scale);
       st.baseHalo = 2.3 * scale;
+      st.dim = !!state.only && !state.only.has(id);        // outside the chosen family: a faint star
+      st.core.material.transparent = true;
+      st.core.material.opacity = st.dim ? 0.14 : 1;
+      st.halo.material.opacity = st.dim ? 0.08 : 0.9;
       setLabel(id);
     });
-    links.forEach(function (l) { l.line.material.color.copy(lighten(state.lines.colorOf(l.idFn()), 0.15)); });
+    links.forEach(function (l) {
+      l.line.material.color.copy(lighten(state.lines.colorOf(l.idFn()), 0.15));
+      l.line.material.opacity = l.base * (state.only && !state.only.has(l.idFn()) ? 0.15 : 1);
+    });
+    renderFilterChip();
     const f = pos3.get(state.focus);
     focusRing.position.set(f.x, f.y, f.z);
   }
@@ -517,9 +537,29 @@
     const params = new URLSearchParams();
     if (state.focus !== defaultFocus) params.set('focus', state.focus);
     if (open != null) params.set('open', open);
+    if (state.filterKey && (open == null || (state.only && state.only.has(open)))) params.set('familia', state.filterKey);
     params.set('lang', state.lang);
     return 'index.html#' + params.toString();
   }
+  function renderFilterChip() {                            // "Resaltando: familia Toro  ×"
+    const chip = $('#c3-filter');
+    if (!state.only) { chip.hidden = true; return; }
+    const k = state.filterKey, given = givenName(nameOf(state.focus));
+    const f = FAMILIES.find(function (x) { return x.key === k; });
+    const what = k === 'paterno' ? tr('famC3Side', { name: given }) : k === 'materno' ? tr('famC3SideM', { name: given }) : tr('famC3Family', { surname: f ? f.name : k });
+    chip.innerHTML = '<span>' + esc(tr('famC3', { family: what })) + ' <b>' + state.only.size + '</b></span>' +
+      '<button type="button" aria-label="' + esc(tr('clear')) + '"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>';
+    chip.hidden = false;
+  }
+  $('#c3-filter').addEventListener('click', function (e) {
+    if (!e.target.closest('button')) return;
+    state.filterKey = '';
+    state.only = null;
+    paint();
+    renderTop();
+    writeHash();
+    if (state.selected != null) renderCard();
+  });
   function renderCard() {
     const id = state.selected;
     if (id == null) return;
@@ -580,6 +620,7 @@
   function writeHash() {
     const params = new URLSearchParams();
     if (state.focus !== defaultFocus) params.set('focus', state.focus);
+    if (state.filterKey) params.set('familia', state.filterKey);
     if (state.lang !== (SETTINGS.defaultLanguage === 'en' ? 'en' : 'es')) params.set('lang', state.lang);
     const s = params.toString();
     history.replaceState(null, '', s ? '#' + s : location.pathname + location.search);
@@ -674,6 +715,7 @@
       const dist = camera.position.distanceTo(st.core.position);
       let o = Math.max(0, Math.min(1, (facing + 0.15) / 0.5));
       o *= Math.max(0, Math.min(1, (RADIUS * 2.6 + 46 - dist) / 18));
+      if (st.dim) o *= 0.1;                                 // names outside the chosen family stay quiet
       if (id === state.selected || id === state.hovered || id === state.focus) o = Math.max(o, 0.95);
       st.label.material.opacity = o;
       st.label.visible = o > 0.02;

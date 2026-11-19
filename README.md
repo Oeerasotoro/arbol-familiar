@@ -15,6 +15,7 @@ A view-only family tree website. Visitors can search for anyone, open their prof
 | `js/i18n.js` | All words in Spanish and English | Only to reword labels |
 | `js/kinship.js` | Relationship calculations | No |
 | `js/lines.js` | Colours of each family branch | Only to change a branch colour |
+| `js/families.js` | Who belongs to each family, for the family filter | No |
 | `js/app.js` | Drawing the tree, buttons and the game | No |
 | `js/constellation.js` | Drawing the 3D view | No |
 | `lib/` | Open-source libraries: d3 and dagre (tree), three.js (3D view) | No |
@@ -40,7 +41,7 @@ Edit files directly on GitHub: open the repository, click `family-data.js`, clic
 
 To add photos: open the `photos` folder on GitHub → **Add file** → **Upload files** → drag the photo in → **Commit changes**.
 
-When a new version adds files (Version 13 added `3d.html`, `css/constellation.css`, `js/lines.js`, `js/constellation.js` and three files in `lib/`), upload the whole folder again with **Add file** → **Upload files**, dragging in everything inside it. GitHub replaces the files that changed and adds the new ones; nothing needs deleting first.
+When a new version adds files (Version 16 added `js/families.js`; Version 13 added `3d.html`, `css/constellation.css`, `js/lines.js`, `js/constellation.js` and three files in `lib/`), upload the whole folder again with **Add file** → **Upload files**, dragging in everything inside it. GitHub replaces the files that changed and adds the new ones; nothing needs deleting first.
 
 ## Common edits
 
@@ -120,9 +121,25 @@ Text goes between straight double quotes. If the text itself contains a double q
 - **Game: ¿Cómo estamos emparentados?** The **Juego** button opens a quiz: two relatives are shown and the visitor picks what one is to the other from four answers. Each answer explains the chain of links ("es hija de …, quien es hermana de …") and **Ver en el árbol** lights up the path. "Sobre Oscar" asks about the focus person; "Entre dos familiares" picks any two relatives. Only named people and confirmed links are used.
 - **3D view.** The **Vista 3D** button opens `3d.html`: everyone as a star, each generation a ring (oldest at the top), coloured by branch. Drag to turn it, scroll or pinch to zoom, tap a star to see who it is and a gold line showing how they connect to the focus person. **Ver el árbol como esta persona** changes the point of view; **Abrir en el árbol** goes back to the tree with that profile open.
 
+- **Family filter.** The row at the top of the tree ("Ver: Todos · Lado paterno · Lado materno · Eraso · Hernández · Toro · Riascos · Torres") shows only part of the family, fully opened. *Lado paterno* and *Lado materno* are the focus person's father's and mother's sides (everyone descended from that parent's ancestors). A surname family starts at the oldest recorded ancestor with that surname and includes all their descendants, whatever their surname, plus the people they married or had children with. The choice is kept in the address, so you can share a link that opens already filtered, for example `https://oeerasotoro.github.io/arbol-familiar/#familia=toro` (also `#familia=eraso`, `riascos`, `hernandez`, `torres`, `paterno`, `materno`). Searching for someone outside the chosen family switches back to everyone. The Vista 3D button carries the filter along and fades everyone else.
+
 Nothing needs to be set up for any of this: it is worked out from `father`, `mother`, `partners` and `notPartners` in `family-data.js`.
 
 To change a branch colour, edit the list `COLORS` at the top of `js/lines.js`.
+
+### Families offered in the filter
+
+They are listed near the top of `family-data.js`, in `SITE_SETTINGS`:
+
+```js
+  families: [
+    { name: "Eraso",     from: 4 },
+    { name: "Toro",      from: 6 },
+    ...
+  ],
+```
+
+`name` is the surname shown on the button and `from` is the number of any one person of that family (a grandparent works well). The site climbs from that person through parents with the same surname to the oldest one recorded, so adding an older ancestor later needs no change here. To offer another family, add a line, for example `{ name: "Bastidas", from: 105 },`.
 
 ## How relationships are calculated
 

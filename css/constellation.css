@@ -148,6 +148,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .c3-fallback p { max-width: 420px; font-size: 16px; color: var(--text-2); }
 .c3-fallback a { color: var(--gold); font-weight: 600; }
 
+/* ---------- "Resaltando: familia …" chip ---------- */
+.c3-filter {
+  position: fixed; top: calc(var(--bar-h) + 12px); left: 16px; z-index: 12;
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--line); font-size: 13px; color: var(--text-2);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.c3-filter b { color: var(--text); margin-left: 2px; }
+.c3-filter button { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--glass-2); display: grid; place-items: center; }
+.c3-filter svg { width: 14px; height: 14px; fill: none; stroke: var(--text-2); stroke-width: 2.4; stroke-linecap: round; }
+
 /* ---------- Phones ---------- */
 @media (max-width: 760px) {
   :root { --bar-h: 108px; }

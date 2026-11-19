@@ -80,6 +80,8 @@
     </svg>
 
     <div class="chips">                                       <!-- Floating notes at the top of the tree -->
+      <div id="family-bar" class="chip family-bar" role="group" hidden></div> <!-- Family filter: Todos · Lado paterno · Eraso … -->
+      <div id="filter-note" class="chip filter-note" hidden></div> <!-- Shown when the focus person is not in the chosen family -->
       <div id="focus-chip" class="chip focus-chip"></div>     <!-- "Viewing the tree as …" -->
       <div id="summary-chip" class="chip summary-chip" hidden></div> <!-- Short family summary of the focus person -->
       <div id="compare-chip" class="chip compare-chip" hidden></div> <!-- "Comparing A ↔ B" -->
@@ -134,6 +136,7 @@
   <script src="js/kinship.js"></script>        <!-- Works out relationships -->
   <script src="js/i18n.js"></script>           <!-- Words in Spanish and English -->
   <script src="js/lines.js"></script>          <!-- Colours for each branch of the family -->
+  <script src="js/families.js"></script>       <!-- Who belongs to each family, for the family filter -->
   <script src="js/app.js"></script>            <!-- Draws the tree and runs the buttons -->
 
   <!-- Visitor counter (GoatCounter, no cookies). Stats: https://arbol-eraso.goatcounter.com
